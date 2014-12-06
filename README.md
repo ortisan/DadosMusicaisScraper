@@ -1,4 +1,4 @@
 CifraClubScraper
 ================
 
-Obtém os dados das cifras do cifraclub
+Obtém os dados das cifras do cifraclub.
