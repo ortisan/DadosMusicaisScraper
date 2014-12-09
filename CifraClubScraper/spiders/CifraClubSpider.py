@@ -10,8 +10,6 @@ from scrapy.http import Request
 from CifraClubScraper.items import Musica
 
 
-# TODO persistir os dados
-
 class CifraClubSpider(scrapy.Spider):
     name = 'cifraclub'
     allwed_domains = ['cifraclub.com.br']
@@ -55,7 +53,7 @@ class CifraClubSpider(scrapy.Spider):
     def parse_musicas(self, response):
 
         div_cifra = response.css('#cifra_cnt')
-        #qtd_exibicoes = response.css('#v_exibicoes b::text').extract()
+        # qtd_exibicoes = response.css('#v_exibicoes b::text').extract()
 
         tom = div_cifra.css('pre#ct_tom_cifra a#cifra_troca_tom::text').extract()
         acordes = div_cifra.css('pre#ct_cifra b::text').extract()
@@ -63,13 +61,9 @@ class CifraClubSpider(scrapy.Spider):
         print('$$$EXIBICOES....', response.meta['exibicoes'])
 
         yield Musica(estilo=response.meta['estilo'],
-                     musica=response.meta['musica'],
+                     nome=response.meta['musica'],
                      artista=response.meta['artista'],
                      tom=tom,
                      acordes=acordes,
                      exibicoes=response.meta['exibicoes'],
                      url=response.url)
-
-
-
-

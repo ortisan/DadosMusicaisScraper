@@ -16,7 +16,12 @@ NEWSPIDER_MODULE = 'CifraClubScraper.spiders'
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'CifraClubScraperUngit (+http://www.yourdomain.com)'
 
-
+#Instrucoes de: https://github.com/sebdah/scrapy-mongodb
 ITEM_PIPELINES = {
-    'CifraClubScraper.pipelines.CifraClubPipeline': 300
+    #'CifraClubScraper.pipelines.CifraClubPipeline': 300
+    'scrapy_mongodb.MongoDBPipeline',
 }
+
+MONGODB_URI = 'mongodb://localhost:27017'
+MONGODB_DATABASE = 'scrapy'
+MONGODB_COLLECTION = 'musicas'

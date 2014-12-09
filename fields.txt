@@ -1,0 +1,7 @@
+estilo
+nome
+artista
+tom
+acordes
+exibicoes
+url

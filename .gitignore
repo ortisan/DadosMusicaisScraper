@@ -56,3 +56,7 @@ target/
 #IDE
 .idea/**
 .DS_Store
+
+#Gerais
+*.csv
+
