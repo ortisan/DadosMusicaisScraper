@@ -15,3 +15,8 @@ NEWSPIDER_MODULE = 'CifraClubScraper.spiders'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'CifraClubScraperUngit (+http://www.yourdomain.com)'
+
+
+ITEM_PIPELINES = {
+    'CifraClubScraper.pipelines.CifraClubPipeline': 300
+}
