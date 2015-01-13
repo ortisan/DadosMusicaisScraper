@@ -5,13 +5,8 @@ Obtém os dados das cifras do cifraclub e exporta para csv.
 
 Pré-requisitos
 --------------
-
-1. Ter o mongodb instalado.
-
-Teste com o comando ```mongo  -version``` ex:
- ```C:\Users\user>mongo -version```
-
- ```MongoDB shell version: 2.6.4```
+1. Ter o python 2.7 e o pip instalados. Teste com os comandos ```python -V``` e ```pip -V```.
+2. Ter o mongodb instalado. Teste com o comando ```mongo -version```.
 
 Instalação dos pacotes python
 -----------------------------
@@ -20,10 +15,10 @@ Instalação dos pacotes python
 Criação da base no mongod
 -------------------------
 
-1. Inicializar o serviço ```mongod```
-2. Executar o comando mongo ```mongo```
-3. Criar a base de dados ```use scrapy```
-4. Sair ``` quit() ```
+1. Inicializar o serviço ```mongod```.
+2. Executar o comando mongo ```mongo```.
+3. Criar a base de dados ```use scrapy```.
+4. Sair ``` quit() ```.
 
 Scrape dos dados
 ----------------
