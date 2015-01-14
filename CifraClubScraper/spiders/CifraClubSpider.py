@@ -14,6 +14,7 @@ class CifraClubSpider(scrapy.Spider):
     name = 'cifraclub'
     allwed_domains = ['cifraclub.com.br']
     start_urls = ['http://www.cifraclub.com.br/estilos/']
+    # CLASS CAPO: info_capo_cifra
 
     def parse(self, response):
 
