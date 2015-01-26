@@ -7,7 +7,8 @@ class Musica(scrapy.Item):
     artista = scrapy.Field()
     tom = scrapy.Field()
     acordes = scrapy.Field()
-    exibicoes = scrapy.Field()
+    exibicoes_cifraclub = scrapy.Field()
+    exibicoes_youtube = scrapy.Field()
     url = scrapy.Field()
 
 
