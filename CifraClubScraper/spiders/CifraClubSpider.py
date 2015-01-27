@@ -18,6 +18,7 @@ class CifraClubSpider(scrapy.Spider):
     start_urls = ['http://www.cifraclub.com.br/estilos/']
     driver = webdriver.Firefox()
     driver.get("http://www.youtube.com")
+    notas = ['A', 'A#', 'B', 'C','C#', 'D','D#', 'E', 'F', 'F#', 'G', 'G#']
     # CLASS CAPO: info_capo_cifra
 
     def parse(self, response):
@@ -87,15 +88,29 @@ class CifraClubSpider(scrapy.Spider):
         tom = None
         if len(tom_txt) > 0:
             tom = tom_txt[0].extract()
-            print(tom)
 
         acordes = div_cifra.css('pre#ct_cifra b::text').extract()
 
         capo = None
+
         capo_txt = div_cifra.css('pre#ct_tom_cifra span#info_capo_cifra a::text')
         if len(capo_txt) > 0:
-            capo = re.search('(\d+)', capo_txt[0].extract()).group(0)
-            print(capo)
+            capo = int(re.search('(\d+)', capo_txt[0].extract()).group(0))
+            novos_acordes = []
+            for acorde in acordes:
+                idx_letra = 1
+                if acorde.find("#") == 1:
+                    idx_letra = 2
+                if acorde.find("b") == 1:
+                    idx_letra = 2
+
+                idx = CifraClubSpider.notas.index(acorde[0:idx_letra])
+                # Busco as notas
+                novo_acorde = CifraClubSpider.notas[(capo + idx) % 12]
+                novos_acordes.append(novo_acorde + acorde[idx:])
+
+            acordes = novos_acordes
+
 
 
 
