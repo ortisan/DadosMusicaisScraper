@@ -19,6 +19,7 @@ class CifraClubSpider(scrapy.Spider):
     driver = webdriver.Firefox()
     driver.get("http://www.youtube.com")
     notas = ['A', 'A#', 'B', 'C','C#', 'D','D#', 'E', 'F', 'F#', 'G', 'G#']
+    notas_bemois = ['A', 'Bb', 'B', 'C','Db', 'D','Eb', 'E', 'F', 'Gb', 'G', 'Ab']
     # CLASS CAPO: info_capo_cifra
 
     def parse(self, response):
@@ -33,6 +34,8 @@ class CifraClubSpider(scrapy.Spider):
             yield request
 
     def parse_musicas_do_estilo(self, response):
+
+
         for a_musicas in response.css('ol.top.spr1 li a'):
             href_musica = a_musicas.css('::attr(href)')[0].extract()
             musica = a_musicas.css('strong.top-txt_primary::text')[0].extract()
@@ -99,20 +102,22 @@ class CifraClubSpider(scrapy.Spider):
             novos_acordes = []
             for acorde in acordes:
                 idx_letra = 1
+                notas = CifraClubSpider.notas
                 if acorde.find("#") == 1:
                     idx_letra = 2
                 if acorde.find("b") == 1:
                     idx_letra = 2
+                    notas = CifraClubSpider.notas_bemois
 
-                idx = CifraClubSpider.notas.index(acorde[0:idx_letra])
-                # Busco as notas
-                novo_acorde = CifraClubSpider.notas[(capo + idx) % 12]
-                novos_acordes.append(novo_acorde + acorde[idx:])
+                try:
+                    idx = notas.index(acorde[0:idx_letra])
+                    # Busco as notas
+                    novo_acorde = notas[(capo + idx) % 12]
+                    novos_acordes.append(novo_acorde + acorde[idx:])
+                except BaseException as exc:
+                    print exc
 
             acordes = novos_acordes
-
-
-
 
         yield Musica(estilo=response.meta['estilo'],
                      nome=response.meta['musica'],
