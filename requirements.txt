@@ -1,2 +1,4 @@
 Scrapy==0.24.0
 pymongo==2.7.2
+scrapy-mongodb==0.7.3
+selenium==2.44.0
