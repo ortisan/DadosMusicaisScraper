@@ -21,36 +21,55 @@ scrapy.log.start(logfile="cifraclub.log", loglevel=scrapy.log.INFO, logstdout=No
 
 
 class CifraClubSpider(scrapy.Spider):
+
     name = 'cifraclub'
     allwed_domains = ['cifraclub.com.br']
     start_urls = ['http://www.cifraclub.com.br/estilos/']
-    driver_cifra = webdriver.Firefox()
-    ## USO DOIS DRIVERS PELA PERFORMANCE DE ABERTURA DAS PAGINAS
-    driver_youtube = webdriver.Firefox()
-    driver_youtube.get('http://www.youtube.com')
-    notas = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#']
-    notas_bemois = ['A', 'Bb', 'B', 'C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab']
+
     # CLASS CAPO: info_capo_cifra
 
+    def __init__(self, idx_batch = 0):
+        self.idx_estilo_inicio = int(idx_batch) * 5
+        self.qtd_estilos_scrap = 5
+
+        self.driver_cifra = webdriver.Firefox()
+        ## USO DOIS DRIVERS PELA PERFORMANCE DE ABERTURA DAS PAGINAS
+        self.driver_youtube = webdriver.Firefox()
+        self.driver_youtube.get('http://www.youtube.com')
+        self.notas = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#']
+        self.notas_bemois = ['A', 'Bb', 'B', 'C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab']
+
+
+
     def parse(self, response):
+        idx = 0
+        idx_estilos_processados = 0;
         for a_estilo in response.css('.lista_estilos li a'):
+            if self.idx_estilo_inicio > idx:
+                idx = idx + 1
+                continue
+            idx_estilos_processados += 1
+            if self.qtd_estilos_scrap < idx_estilos_processados:
+                break
+
+
             href_estilo = a_estilo.css('::attr(href)')[0].extract()
             nome_estilo = a_estilo.css('::text')[0].extract()
 
-            CifraClubSpider.driver_cifra.get(urljoin(response.url, href_estilo))
+            self.driver_cifra.get(urljoin(response.url, href_estilo))
 
             qtd_clicks_bt_mais_musicas = 4
 
             while qtd_clicks_bt_mais_musicas > 1:
-                bt_mais_musicas = CifraClubSpider.driver_cifra.find_element_by_css_selector("button.btn_full")
+                bt_mais_musicas = self.driver_cifra.find_element_by_css_selector("button.btn_full")
                 if bt_mais_musicas and bt_mais_musicas.is_displayed():
                     bt_mais_musicas.click()
-                    CifraClubSpider.driver_cifra.implicitly_wait(1)
+                    self.driver_cifra.implicitly_wait(1)
                     qtd_clicks_bt_mais_musicas = qtd_clicks_bt_mais_musicas - 1
                 else:
                     break
 
-            lista_musicas = CifraClubSpider.driver_cifra.find_element_by_css_selector("ol.top.spr1").get_attribute(
+            lista_musicas = self.driver_cifra.find_element_by_css_selector("ol.top.spr1").get_attribute(
                 'innerHTML')
             Selector(text=lista_musicas)
 
@@ -94,12 +113,12 @@ class CifraClubSpider(scrapy.Spider):
             novos_acordes = []
             for acorde in acordes:
                 idx_letra = 1
-                notas = CifraClubSpider.notas
+                notas = self.notas
                 if acorde.find("#") == 1:
                     idx_letra = 2
                 if acorde.find("b") == 1:
                     idx_letra = 2
-                    notas = CifraClubSpider.notas_bemois
+                    notas = self.notas_bemois
 
                 try:
                     idx = notas.index(acorde[0:idx_letra])
@@ -118,40 +137,40 @@ class CifraClubSpider(scrapy.Spider):
 
         ## IMPORTA DADOS DO YOUTUBE
         try:
-            youtube_search_term = CifraClubSpider.driver_youtube.find_element_by_id("masthead-search-term")
+            youtube_search_term = self.driver_youtube.find_element_by_id("masthead-search-term")
             youtube_search_term.clear()
             youtube_search_term.send_keys(artista + ' ' + musica)
 
-            search = CifraClubSpider.driver_youtube.find_element_by_id("search-btn")
+            search = self.driver_youtube.find_element_by_id("search-btn")
             search.click()
 
-            results_youtube = WebDriverWait(CifraClubSpider.driver_youtube, 10).until(
+            results_youtube = WebDriverWait(self.driver_youtube, 10).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "ol#section-list"))
             )
 
-            CifraClubSpider.driver_youtube.find_element_by_css_selector("#search-btn")
+            self.driver_youtube.find_element_by_css_selector("#search-btn")
 
-            # visualizacoes = CifraClubSpider.driver_youtube.find_element_by_css_selector(".yt-lockup-content .yt-lockup-meta-info li:nth-child(2)")
+            # visualizacoes = self.driver_youtube.find_element_by_css_selector(".yt-lockup-content .yt-lockup-meta-info li:nth-child(2)")
             # m = re.search('(\d+\.*)+', visualizacoes.text)
             # qtd_exibicoes_youtube = m.group(0)
 
-            link_musica = CifraClubSpider.driver_youtube.find_element_by_css_selector(
+            link_musica = self.driver_youtube.find_element_by_css_selector(
                 "ol#section-list div.yt-lockup-video:nth-child(1) a")
             link_musica.click()
 
-            results_youtube = WebDriverWait(CifraClubSpider.driver_youtube, 10).until(
+            results_youtube = WebDriverWait(self.driver_youtube, 10).until(
                 EC.presence_of_element_located((By.ID, "watch-header"))
             )
 
-            qtd_exibicoes_youtube_str = CifraClubSpider.driver_youtube.find_element_by_css_selector(
+            qtd_exibicoes_youtube_str = self.driver_youtube.find_element_by_css_selector(
                 "#watch-header .watch-view-count").text
             qtd_exibicoes_youtube = qtd_exibicoes_youtube_str.replace(".", "")
 
-            qtd_gostei_youtube_str = CifraClubSpider.driver_youtube.find_element_by_css_selector(
+            qtd_gostei_youtube_str = self.driver_youtube.find_element_by_css_selector(
                 "#watch-header #watch-like-dislike-buttons span:nth-child(1)").text
             qtd_gostei_youtube = qtd_gostei_youtube_str.replace(".", "")
 
-            qtd_nao_gostei_youtube_srt = CifraClubSpider.driver_youtube.find_element_by_css_selector(
+            qtd_nao_gostei_youtube_srt = self.driver_youtube.find_element_by_css_selector(
                 "#watch-header #watch-like-dislike-buttons span:nth-child(2)").text
             qtd_nao_gostei_youtube = qtd_nao_gostei_youtube_srt.replace(".", "")
 
@@ -167,7 +186,7 @@ class CifraClubSpider(scrapy.Spider):
                          url=response.url,
                          possui_tabs=possui_tabs,
                          url_cifraclub = response.url,
-                         url_youtube = CifraClubSpider.driver_youtube.current_url,
+                         url_youtube = self.driver_youtube.current_url,
                          html=html)
 
         except BaseException as exc:
