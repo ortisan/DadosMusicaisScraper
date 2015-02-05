@@ -9,9 +9,6 @@ import scrapy
 from scrapy.http import Request
 from scrapy.selector import Selector
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from scrapy import log
 
 from CifraClubScraper.items import Musica
@@ -21,63 +18,54 @@ scrapy.log.start(logfile="cifraclub.log", loglevel=scrapy.log.INFO, logstdout=No
 
 
 class CifraClubSpider(scrapy.Spider):
-
     name = 'cifraclub'
     allwed_domains = ['cifraclub.com.br']
     start_urls = ['http://www.cifraclub.com.br/estilos/']
 
     # CLASS CAPO: info_capo_cifra
 
-    def __init__(self, idx_batch = 0):
-        self.idx_estilo_inicio = int(idx_batch) * 5
-        self.qtd_estilos_scrap = 5
-
-        self.driver_cifra = webdriver.Firefox()
-        ## USO DOIS DRIVERS PELA PERFORMANCE DE ABERTURA DAS PAGINAS
-        self.driver_youtube = webdriver.Firefox()
-        self.driver_youtube.get('http://www.youtube.com')
+    def __init__(self):
         self.notas = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#']
         self.notas_bemois = ['A', 'Bb', 'B', 'C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab']
 
 
-
     def parse(self, response):
-        idx = 0
-        idx_estilos_processados = 0;
         for a_estilo in response.css('.lista_estilos li a'):
-            if self.idx_estilo_inicio > idx:
-                idx = idx + 1
-                continue
-            idx_estilos_processados += 1
-            if self.qtd_estilos_scrap < idx_estilos_processados:
-                break
 
 
             href_estilo = a_estilo.css('::attr(href)')[0].extract()
             nome_estilo = a_estilo.css('::text')[0].extract()
 
-            self.driver_cifra.get(urljoin(response.url, href_estilo))
+            scrapy.log.msg(">> Estilo <%s (%s)> sera processado..." % (nome_estilo, href_estilo),
+                           level=scrapy.log.INFO, spider=CifraClubSpider)
+
+            driver_cifra = webdriver.Firefox()
+            driver_cifra.get(urljoin(response.url, href_estilo))
 
             qtd_clicks_bt_mais_musicas = 4
 
             while qtd_clicks_bt_mais_musicas > 1:
-                bt_mais_musicas = self.driver_cifra.find_element_by_css_selector("button.btn_full")
+                bt_mais_musicas = driver_cifra.find_element_by_css_selector("button.btn_full")
                 if bt_mais_musicas and bt_mais_musicas.is_displayed():
                     bt_mais_musicas.click()
-                    self.driver_cifra.implicitly_wait(1)
+                    driver_cifra.implicitly_wait(1)
                     qtd_clicks_bt_mais_musicas = qtd_clicks_bt_mais_musicas - 1
                 else:
                     break
 
-            lista_musicas = self.driver_cifra.find_element_by_css_selector("ol.top.spr1").get_attribute(
-                'innerHTML')
-            Selector(text=lista_musicas)
+            lista_musicas = driver_cifra.find_element_by_css_selector("ol.top.spr1").get_attribute('innerHTML')
+
+            # FECHAMOS O WEBDRIVER
+            driver_cifra.close()
 
             for a_musicas in Selector(text=lista_musicas).css('li a'):
                 href_musica = a_musicas.css('::attr(href)')[0].extract()
                 musica = a_musicas.css('strong.top-txt_primary::text')[0].extract()
                 artista = a_musicas.css('strong.top-txt_secondary::text')[0].extract()
                 qtd_exibicoes_cifraclub = a_musicas.css('small::text')[0].extract()
+
+                scrapy.log.msg(">> Musica <%s - %s (%s)> sera lida..." % (artista, musica, href_musica),
+                               level=scrapy.log.INFO, spider=CifraClubSpider)
 
                 scheme, netloc, path, query, fragment = urlsplit(response.url)
                 path = href_musica
@@ -94,6 +82,10 @@ class CifraClubSpider(scrapy.Spider):
 
 
     def parse_musicas(self, response):
+
+        scrapy.log.msg(">> Musica <(%s)> lida..." % (response.url),
+                       level=scrapy.log.INFO, spider=CifraClubSpider)
+
         html = response.body
 
         div_cifra = response.css('#cifra_cnt')
@@ -135,61 +127,19 @@ class CifraClubSpider(scrapy.Spider):
         musica = response.meta['musica']
         artista = response.meta['artista']
 
-        ## IMPORTA DADOS DO YOUTUBE
-        try:
-            youtube_search_term = self.driver_youtube.find_element_by_id("masthead-search-term")
-            youtube_search_term.clear()
-            youtube_search_term.send_keys(artista + ' ' + musica)
+        estilo = response.meta['estilo']
+        # import hashlib
+        # hashlib.sha224(estilo + artista + musica).hexdigest()
+        _id = estilo + artista + musica
 
-            search = self.driver_youtube.find_element_by_id("search-btn")
-            search.click()
-
-            results_youtube = WebDriverWait(self.driver_youtube, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "ol#section-list"))
-            )
-
-            self.driver_youtube.find_element_by_css_selector("#search-btn")
-
-            # visualizacoes = self.driver_youtube.find_element_by_css_selector(".yt-lockup-content .yt-lockup-meta-info li:nth-child(2)")
-            # m = re.search('(\d+\.*)+', visualizacoes.text)
-            # qtd_exibicoes_youtube = m.group(0)
-
-            link_musica = self.driver_youtube.find_element_by_css_selector(
-                "ol#section-list div.yt-lockup-video:nth-child(1) a")
-            link_musica.click()
-
-            results_youtube = WebDriverWait(self.driver_youtube, 10).until(
-                EC.presence_of_element_located((By.ID, "watch-header"))
-            )
-
-            qtd_exibicoes_youtube_str = self.driver_youtube.find_element_by_css_selector(
-                "#watch-header .watch-view-count").text
-            qtd_exibicoes_youtube = qtd_exibicoes_youtube_str.replace(".", "")
-
-            qtd_gostei_youtube_str = self.driver_youtube.find_element_by_css_selector(
-                "#watch-header #watch-like-dislike-buttons span:nth-child(1)").text
-            qtd_gostei_youtube = qtd_gostei_youtube_str.replace(".", "")
-
-            qtd_nao_gostei_youtube_srt = self.driver_youtube.find_element_by_css_selector(
-                "#watch-header #watch-like-dislike-buttons span:nth-child(2)").text
-            qtd_nao_gostei_youtube = qtd_nao_gostei_youtube_srt.replace(".", "")
-
-            yield Musica(estilo=response.meta['estilo'],
-                         nome=musica,
-                         artista=artista,
-                         tom=tom,
-                         acordes=acordes,
-                         exibicoes_cifraclub=response.meta['exibicoes_cifraclub'],
-                         exibicoes_youtube=qtd_exibicoes_youtube,
-                         qtd_gostei_youtube=qtd_gostei_youtube,
-                         qtd_nao_gostei_youtube=qtd_nao_gostei_youtube,
-                         url=response.url,
-                         possui_tabs=possui_tabs,
-                         url_cifraclub = response.url,
-                         url_youtube = self.driver_youtube.current_url,
-                         html=html)
-
-        except BaseException as exc:
-            scrapy.log.msg("Erro ao obter dados da musica: %s - %s. \nDetalhes: %s" % (artista, musica, exc),
-                           level=scrapy.log.ERROR, spider=CifraClubSpider)
-
+        yield Musica(_id=_id,
+                     estilo=estilo,
+                     nome=musica,
+                     artista=artista,
+                     tom=tom,
+                     acordes=acordes,
+                     exibicoes_cifraclub=response.meta['exibicoes_cifraclub'],
+                     url=response.url,
+                     possui_tabs=possui_tabs,
+                     url_cifraclub=response.url,
+                     html=html)

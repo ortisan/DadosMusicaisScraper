@@ -2,6 +2,7 @@ import scrapy
 
 
 class Musica(scrapy.Item):
+    _id = scrapy.Field()
     estilo = scrapy.Field()
     nome = scrapy.Field()
     artista = scrapy.Field()

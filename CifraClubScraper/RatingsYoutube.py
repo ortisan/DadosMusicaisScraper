@@ -1,11 +1,14 @@
 __author__ = 'marcelo'
+
 import concurrent.futures
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium import webdriver
 from pymongo import MongoClient
+
 from CifraClubScraper.settings import *
+
 
 client = MongoClient(MONGODB_URI)
 db = client[MONGODB_DATABASE]
@@ -13,7 +16,7 @@ colecao = db[MONGODB_COLLECTION]
 
 
 def atualizar_dados_rating_youtube(idx, qtd):
-    registros = colecao.find({}, {'_id':True, "artista" : True, "nome" : True}).skip(idx).limit(qtd)
+    registros = colecao.find({}, {'_id': True, "artista": True, "nome": True}).skip(idx).limit(qtd)
 
     driver_youtube = webdriver.Firefox()
     driver_youtube.get("http://youtube.com")
@@ -56,12 +59,12 @@ def atualizar_dados_rating_youtube(idx, qtd):
                 "#watch-header #watch-like-dislike-buttons span:nth-child(2)").text
             qtd_nao_gostei_youtube = qtd_nao_gostei_youtube_srt.replace(".", "")
 
-            dictUpdate = {"exibicoes_youtube":qtd_exibicoes_youtube,
-                         "qtd_gostei_youtube":qtd_gostei_youtube,
-                         "qtd_nao_gostei_youtube":qtd_nao_gostei_youtube}
+            dictUpdate = {"exibicoes_youtube": qtd_exibicoes_youtube,
+                          "qtd_gostei_youtube": qtd_gostei_youtube,
+                          "qtd_nao_gostei_youtube": qtd_nao_gostei_youtube}
 
             # atualizamos o registro com os dados dos ratings do youtube.
-            colecao.update({"_id": id}, {'$set':dictUpdate })
+            colecao.update({"_id": id}, {'$set': dictUpdate})
 
         except BaseException as exc:
             print exc
@@ -74,5 +77,5 @@ if __name__ == "__main__":
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=3) as executor:
         for i in range(0, qtd_registros, 50):
-             executor.submit(atualizar_dados_rating_youtube, i, 50)
+            executor.submit(atualizar_dados_rating_youtube, i, 50)
 
