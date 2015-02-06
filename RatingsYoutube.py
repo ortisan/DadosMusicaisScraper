@@ -16,6 +16,7 @@ colecao = db[MONGODB_COLLECTION]
 
 
 def atualizar_dados_rating_youtube(idx, qtd):
+    #TODO: Filtrar somente os registros sem metricas do youtube.
     registros = colecao.find({}, {'_id': True, "artista": True, "nome": True}).skip(idx).limit(qtd)
 
     driver_youtube = webdriver.Firefox()
@@ -67,6 +68,7 @@ def atualizar_dados_rating_youtube(idx, qtd):
             colecao.update({"_id": id}, {'$set': dictUpdate})
 
         except BaseException as exc:
+            # TODO: Logar o erro.
             print exc
 
     driver_youtube.close()
