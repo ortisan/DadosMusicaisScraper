@@ -11,13 +11,13 @@ from scrapy.selector import Selector
 from selenium import webdriver
 from scrapy import log
 
-from CifraClubScraper.items import Musica
+from DadosMusicaisScraper.items import Musica
 
 
 scrapy.log.start(logfile="cifraclub.log", loglevel=scrapy.log.INFO, logstdout=None)
 
 
-class CifraClubSpider(scrapy.Spider):
+class DadosMusicaisSpider(scrapy.Spider):
     name = 'cifraclub'
     allwed_domains = ['cifraclub.com.br']
     start_urls = ['http://www.cifraclub.com.br/estilos/']
@@ -28,63 +28,65 @@ class CifraClubSpider(scrapy.Spider):
         self.notas = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#']
         self.notas_bemois = ['A', 'Bb', 'B', 'C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab']
 
+        self.driver_cifra = webdriver.Firefox()
+
 
     def parse(self, response):
         for a_estilo in response.css('.lista_estilos li a'):
+            try:
+                href_estilo = a_estilo.css('::attr(href)')[0].extract()
+                nome_estilo = a_estilo.css('::text')[0].extract()
+
+                scrapy.log.msg(">> Estilo <%s (%s)> sera processado..." % (nome_estilo, href_estilo),
+                               level=scrapy.log.INFO, spider=DadosMusicaisSpider)
+
+                self.driver_cifra.get(urljoin(response.url, href_estilo))
+
+                qtd_clicks_bt_mais_musicas = 4
+
+                while qtd_clicks_bt_mais_musicas > 1:
+                    bt_mais_musicas = self.driver_cifra.find_element_by_css_selector("button.btn_full")
+                    if bt_mais_musicas and bt_mais_musicas.is_displayed():
+                        bt_mais_musicas.click()
+                        self.driver_cifra.implicitly_wait(1)
+                        qtd_clicks_bt_mais_musicas = qtd_clicks_bt_mais_musicas - 1
+                    else:
+                        break
 
 
-            href_estilo = a_estilo.css('::attr(href)')[0].extract()
-            nome_estilo = a_estilo.css('::text')[0].extract()
+                lista_musicas = self.driver_cifra.find_element_by_css_selector("ol.top.spr1").get_attribute('innerHTML')
 
-            scrapy.log.msg(">> Estilo <%s (%s)> sera processado..." % (nome_estilo, href_estilo),
-                           level=scrapy.log.INFO, spider=CifraClubSpider)
 
-            driver_cifra = webdriver.Firefox()
-            driver_cifra.get(urljoin(response.url, href_estilo))
+                for a_musicas in Selector(text=lista_musicas).css('li a'):
+                    href_musica = a_musicas.css('::attr(href)')[0].extract()
+                    musica = a_musicas.css('strong.top-txt_primary::text')[0].extract()
+                    artista = a_musicas.css('strong.top-txt_secondary::text')[0].extract()
+                    qtd_exibicoes_cifraclub = a_musicas.css('small::text')[0].extract()
 
-            qtd_clicks_bt_mais_musicas = 4
+                    scrapy.log.msg(">> Musica <%s - %s (%s)> sera lida..." % (artista, musica, href_musica),
+                                   level=scrapy.log.INFO, spider=DadosMusicaisSpider)
 
-            while qtd_clicks_bt_mais_musicas > 1:
-                bt_mais_musicas = driver_cifra.find_element_by_css_selector("button.btn_full")
-                if bt_mais_musicas and bt_mais_musicas.is_displayed():
-                    bt_mais_musicas.click()
-                    driver_cifra.implicitly_wait(1)
-                    qtd_clicks_bt_mais_musicas = qtd_clicks_bt_mais_musicas - 1
-                else:
-                    break
+                    scheme, netloc, path, query, fragment = urlsplit(response.url)
+                    path = href_musica
+                    query = ''
+                    url_musica = urlunsplit((scheme, netloc, path, query, fragment))
 
-            lista_musicas = driver_cifra.find_element_by_css_selector("ol.top.spr1").get_attribute('innerHTML')
+                    ## TRANSPORTA DADOS PARA O PROXIMO CALLBACK
+                    request = Request(url_musica, callback=self.parse_musicas)
+                    request.meta['estilo'] = nome_estilo
+                    request.meta['musica'] = musica
+                    request.meta['artista'] = artista
+                    request.meta['exibicoes_cifraclub'] = qtd_exibicoes_cifraclub
+                    yield request
 
-            # FECHAMOS O WEBDRIVER
-            driver_cifra.close()
-
-            for a_musicas in Selector(text=lista_musicas).css('li a'):
-                href_musica = a_musicas.css('::attr(href)')[0].extract()
-                musica = a_musicas.css('strong.top-txt_primary::text')[0].extract()
-                artista = a_musicas.css('strong.top-txt_secondary::text')[0].extract()
-                qtd_exibicoes_cifraclub = a_musicas.css('small::text')[0].extract()
-
-                scrapy.log.msg(">> Musica <%s - %s (%s)> sera lida..." % (artista, musica, href_musica),
-                               level=scrapy.log.INFO, spider=CifraClubSpider)
-
-                scheme, netloc, path, query, fragment = urlsplit(response.url)
-                path = href_musica
-                query = ''
-                url_musica = urlunsplit((scheme, netloc, path, query, fragment))
-
-                ## TRANSPORTA DADOS PARA O PROXIMO CALLBACK
-                request = Request(url_musica, callback=self.parse_musicas)
-                request.meta['estilo'] = nome_estilo
-                request.meta['musica'] = musica
-                request.meta['artista'] = artista
-                request.meta['exibicoes_cifraclub'] = qtd_exibicoes_cifraclub
-                yield request
+            except BaseException as exc:
+                scrapy.log.msg("Erro ao processar o estilo <%s>. Detalhes: %s..." % (nome_estilo, exc), loglevel=scrapy.log.ERROR, logstdout=None)
 
 
     def parse_musicas(self, response):
 
         scrapy.log.msg(">> Musica <(%s)> lida..." % (response.url),
-                       level=scrapy.log.INFO, spider=CifraClubSpider)
+                       level=scrapy.log.INFO, spider=DadosMusicaisSpider)
 
         html = response.body
 
@@ -130,7 +132,7 @@ class CifraClubSpider(scrapy.Spider):
         estilo = response.meta['estilo']
         # import hashlib
         # hashlib.sha224(estilo + artista + musica).hexdigest()
-        _id = estilo + artista + musica
+        _id = artista + musica
 
         yield Musica(_id=_id,
                      estilo=estilo,

@@ -8,17 +8,17 @@
 #     http://doc.scrapy.org/en/latest/topics/settings.html
 #
 
-BOT_NAME = 'CifraClubScraper'
+BOT_NAME = 'DadosMusicaisScraper'
 
-SPIDER_MODULES = ['CifraClubScraper.spiders']
-NEWSPIDER_MODULE = 'CifraClubScraper.spiders'
+SPIDER_MODULES = ['DadosMusicaisScraper.spiders']
+NEWSPIDER_MODULE = 'DadosMusicaisScraper.spiders'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'CifraClubScraperUngit (+http://www.yourdomain.com)'
 
 #Instrucoes de: https://github.com/sebdah/scrapy-mongodb
 ITEM_PIPELINES = {
-    #'CifraClubScraper.pipelines.CifraClubPipeline': 300
+    #'DadosMusicaisScraper.pipelines.CifraClubPipeline': 300
     'scrapy_mongodb.MongoDBPipeline',
 }
 

@@ -7,7 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium import webdriver
 from pymongo import MongoClient
 
-from CifraClubScraper.settings import *
+from DadosMusicaisScraper.settings import *
 
 
 client = MongoClient(MONGODB_URI)
@@ -23,11 +23,11 @@ def atualizar_dados_rating_youtube(idx, qtd):
 
     for registro in registros:
 
-        try:
-            id = registro['_id']
-            artista = registro['artista']
-            musica = registro['nome']
+        id = registro['_id']
+        artista = registro['artista']
+        musica = registro['nome']
 
+        try:
             youtube_search_term = driver_youtube.find_element_by_id("masthead-search-term")
             youtube_search_term.clear()
             youtube_search_term.send_keys(artista + ' ' + musica)
