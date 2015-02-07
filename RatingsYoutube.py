@@ -10,14 +10,20 @@ from pymongo import MongoClient
 from DadosMusicaisScraper.settings import *
 
 
+import logging
+logging.basicConfig(filename="logs/youtube.log", level=LOG_LEVEL)
+
+
 client = MongoClient(MONGODB_URI)
 db = client[MONGODB_DATABASE]
 colecao = db[MONGODB_COLLECTION]
 
 
 def atualizar_dados_rating_youtube(idx, qtd):
-    #TODO: Filtrar somente os registros sem metricas do youtube.
-    registros = colecao.find({}, {'_id': True, "artista": True, "nome": True}).skip(idx).limit(qtd)
+    # TODO: Filtrar somente os registros sem metricas do youtube.
+    registros = colecao.find({'exibicoes_youtube': {'$exists': False}}).skip(idx).limit(qtd)
+
+    print colecao.find({'exibicoes_youtube': {'$exists': False}}).skip(idx).limit(qtd).count()
 
     driver_youtube = webdriver.Firefox()
     driver_youtube.get("http://youtube.com")
@@ -29,12 +35,12 @@ def atualizar_dados_rating_youtube(idx, qtd):
         musica = registro['nome']
 
         try:
-            youtube_search_term = driver_youtube.find_element_by_id("masthead-search-term")
-            youtube_search_term.clear()
-            youtube_search_term.send_keys(artista + ' ' + musica)
+            input_buscar = driver_youtube.find_element_by_id("masthead-search-term")
+            input_buscar.clear()
+            input_buscar.send_keys(artista + ' ' + musica)
 
-            search = driver_youtube.find_element_by_id("search-btn")
-            search.click()
+            botao_buscar = driver_youtube.find_element_by_id("search-btn")
+            botao_buscar.click()
 
             WebDriverWait(driver_youtube, 10).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "ol#section-list"))

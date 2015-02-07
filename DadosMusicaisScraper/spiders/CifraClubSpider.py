@@ -13,12 +13,8 @@ from scrapy import log
 
 from DadosMusicaisScraper.items import Musica
 
-
-scrapy.log.start(logfile="cifraclub.log", loglevel=scrapy.log.INFO, logstdout=None)
-
-
-class DadosMusicaisSpider(scrapy.Spider):
-    name = 'cifraclub'
+class CifraClubSpider(scrapy.Spider):
+    name = 'CifraClubSpider'
     allwed_domains = ['cifraclub.com.br']
     start_urls = ['http://www.cifraclub.com.br/estilos/']
 
@@ -38,7 +34,7 @@ class DadosMusicaisSpider(scrapy.Spider):
                 nome_estilo = a_estilo.css('::text')[0].extract()
 
                 scrapy.log.msg(">> Estilo <%s (%s)> sera processado..." % (nome_estilo, href_estilo),
-                               level=scrapy.log.INFO, spider=DadosMusicaisSpider)
+                               level=scrapy.log.INFO, spider=CifraClubSpider)
 
                 self.driver_cifra.get(urljoin(response.url, href_estilo))
 
@@ -59,12 +55,12 @@ class DadosMusicaisSpider(scrapy.Spider):
 
                 for a_musicas in Selector(text=lista_musicas).css('li a'):
                     href_musica = a_musicas.css('::attr(href)')[0].extract()
-                    musica = a_musicas.css('strong.top-txt_primary::text')[0].extract()
+                    nome_musica = a_musicas.css('strong.top-txt_primary::text')[0].extract()
                     artista = a_musicas.css('strong.top-txt_secondary::text')[0].extract()
                     qtd_exibicoes_cifraclub = a_musicas.css('small::text')[0].extract()
 
-                    scrapy.log.msg(">> Musica <%s - %s (%s)> sera lida..." % (artista, musica, href_musica),
-                                   level=scrapy.log.INFO, spider=DadosMusicaisSpider)
+                    scrapy.log.msg(">> Musica <%s - %s (%s)> sera lida..." % (artista, nome_musica, href_musica),
+                                   level=scrapy.log.INFO, spider=CifraClubSpider)
 
                     scheme, netloc, path, query, fragment = urlsplit(response.url)
                     path = href_musica
@@ -74,9 +70,9 @@ class DadosMusicaisSpider(scrapy.Spider):
                     ## TRANSPORTA DADOS PARA O PROXIMO CALLBACK
                     request = Request(url_musica, callback=self.parse_musicas)
                     request.meta['estilo'] = nome_estilo
-                    request.meta['musica'] = musica
+                    request.meta['nome'] = nome_musica
                     request.meta['artista'] = artista
-                    request.meta['exibicoes_cifraclub'] = qtd_exibicoes_cifraclub
+                    request.meta['qtd_exibicoes_cifraclub'] = qtd_exibicoes_cifraclub
                     yield request
 
             except BaseException as exc:
@@ -86,7 +82,7 @@ class DadosMusicaisSpider(scrapy.Spider):
     def parse_musicas(self, response):
 
         scrapy.log.msg(">> Musica <(%s)> lida..." % (response.url),
-                       level=scrapy.log.INFO, spider=DadosMusicaisSpider)
+                       level=scrapy.log.INFO, spider=CifraClubSpider)
 
         html = response.body
 
@@ -126,22 +122,21 @@ class DadosMusicaisSpider(scrapy.Spider):
 
         possui_tabs = len(div_cifra.css('span.tablatura')) > 0
 
-        musica = response.meta['musica']
+        nome_musica = response.meta['nome']
         artista = response.meta['artista']
 
         estilo = response.meta['estilo']
         # import hashlib
-        # hashlib.sha224(estilo + artista + musica).hexdigest()
-        _id = artista + musica
+        # hashlib.sha224(estilo + artista + nome).hexdigest()
+        _id = artista + nome_musica
 
         yield Musica(_id=_id,
                      estilo=estilo,
-                     nome=musica,
+                     nome=nome_musica,
                      artista=artista,
                      tom=tom,
                      acordes=acordes,
-                     exibicoes_cifraclub=response.meta['exibicoes_cifraclub'],
-                     url=response.url,
+                     qtd_exibicoes_cifraclub=response.meta['qtd_exibicoes_cifraclub'],
                      possui_tabs=possui_tabs,
                      url_cifraclub=response.url,
-                     html=html)
+                     html_cifraclub=html)

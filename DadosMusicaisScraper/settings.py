@@ -11,20 +11,23 @@
 BOT_NAME = 'DadosMusicaisScraper'
 
 SPIDER_MODULES = ['DadosMusicaisScraper.spiders']
-NEWSPIDER_MODULE = 'DadosMusicaisScraper.spiders'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'CifraClubScraperUngit (+http://www.yourdomain.com)'
 
 #Instrucoes de: https://github.com/sebdah/scrapy-mongodb
 ITEM_PIPELINES = {
-    #'DadosMusicaisScraper.pipelines.CifraClubPipeline': 300
+    #'DadosMusicaisScraper.pipelines.CustomMongoDBPipeline',
     'scrapy_mongodb.MongoDBPipeline',
 }
 
 MONGODB_URI = 'mongodb://localhost:27017'
 MONGODB_DATABASE = 'scrapy'
-MONGODB_COLLECTION = 'musicas2'
+MONGODB_COLLECTION = 'musicas'
+MONGODB_UNIQUE_KEY= '_id'
 
 LOG_LEVEL = 'INFO'
-CONCURRENT_REQUESTS = 100
+#CONCURRENT_REQUESTS = 100
+
+from scrapy import log
+#log.start(logfile="logs/dadosmusicais.log")
