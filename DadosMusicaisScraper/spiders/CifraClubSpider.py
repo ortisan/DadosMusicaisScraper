@@ -14,11 +14,10 @@ from scrapy import log
 from DadosMusicaisScraper.items import Musica
 
 class CifraClubSpider(scrapy.Spider):
+
     name = 'CifraClubSpider'
     allwed_domains = ['cifraclub.com.br']
     start_urls = ['http://www.cifraclub.com.br/estilos/']
-
-    # CLASS CAPO: info_capo_cifra
 
     def __init__(self):
         self.notas = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#']

@@ -12,6 +12,7 @@ from DadosMusicaisScraper.items import Musica
 from DadosMusicaisScraper.utils import *
 
 class YoutubespiderSpider(scrapy.Spider):
+
     name = "YoutubeSpider"
     allowed_domains = ["youtube.com"]
     start_urls = ['http://www.youtube.com/']
@@ -24,13 +25,12 @@ class YoutubespiderSpider(scrapy.Spider):
 
     def parse(self, response):
         # Obtemos os registros_mongo da colecao
-        registros_mongo = self.colecao.find({'exibicoes_youtube': {'$exists': False}})
+        registros_mongo = self.colecao.find({'qtd_exibicoes_youtube': {'$exists': 0}})
 
         url = 'https://www.youtube.com/results'
         scheme, netloc, path, query, fragment = urlsplit(url)
 
         for registro_mongo in registros_mongo:
-            id = registro_mongo['_id']
             artista = registro_mongo['artista']
             musica = registro_mongo['nome']
 
@@ -57,9 +57,9 @@ class YoutubespiderSpider(scrapy.Spider):
         else:
             yield Musica(_id=registro_mongo['_id'],
                          estilo=registro_mongo['estilo'],
-                         nome=registro_mongo['_id'],
+                         nome=registro_mongo['nome'],
                          artista=registro_mongo['artista'],
-                         tom=registro_mongo['_id'],
+                         tom=registro_mongo['tom'],
                          acordes=registro_mongo['acordes'],
                          qtd_exibicoes_cifraclub=registro_mongo['qtd_exibicoes_cifraclub'],
                          possui_tabs=registro_mongo['possui_tabs'],
@@ -97,9 +97,9 @@ class YoutubespiderSpider(scrapy.Spider):
 
             yield Musica(_id=registro_mongo['_id'],
                          estilo=registro_mongo['estilo'],
-                         nome=registro_mongo['_id'],
+                         nome=registro_mongo['nome'],
                          artista=registro_mongo['artista'],
-                         tom=registro_mongo['_id'],
+                         tom=registro_mongo['tom'],
                          acordes=registro_mongo['acordes'],
                          qtd_exibicoes_cifraclub=registro_mongo['qtd_exibicoes_cifraclub'],
                          possui_tabs=registro_mongo['possui_tabs'],
