@@ -1,7 +1,7 @@
 DadosMusicaisScraper
 ================
 
-Obtém os dados musicais através do Cifraclub(acordes, tom, etc) e Youtube (Ratings) e exporta para csv.
+Obtém os dados musicais através do Cifraclub (acordes, tom, etc) e Youtube (Ratings) e exporta para csv.
 
 Pré-requisitos
 --------------
@@ -10,7 +10,7 @@ Pré-requisitos
 
 Instalação dos pacotes python
 -----------------------------
-1. No diretório do projeto executar: ```pip install -r requirements.py```
+1. No diretório do projeto executar: ```pip install -r requirements.txt```
 
 Criação da base no mongod
 -------------------------
