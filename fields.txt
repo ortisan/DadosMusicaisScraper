@@ -2,6 +2,12 @@ estilo
 nome
 artista
 tom
+possui_tabs
+url_cifraclub
+url_busca_youtube
+url_video_youtube
+qtd_exibicoes_cifraclub
+qtd_exibicoes_youtube
+qtd_gostei_youtube
+qtd_nao_gostei_youtube
 acordes
-exibicoes
-url

@@ -9,6 +9,7 @@ from scrapy.http import Request
 
 from DadosMusicaisScraper.settings import *
 from DadosMusicaisScraper.items import Musica
+from DadosMusicaisScraper.utils import *
 
 class YoutubespiderSpider(scrapy.Spider):
     name = "YoutubeSpider"
@@ -60,11 +61,10 @@ class YoutubespiderSpider(scrapy.Spider):
                          artista=registro_mongo['artista'],
                          tom=registro_mongo['_id'],
                          acordes=registro_mongo['acordes'],
-                         exibicoes_cifraclub=registro_mongo['exibicoes_cifraclub'],
-                         url=registro_mongo['url'],
+                         qtd_exibicoes_cifraclub=registro_mongo['qtd_exibicoes_cifraclub'],
                          possui_tabs=registro_mongo['possui_tabs'],
                          url_cifraclub=registro_mongo['url_cifraclub'],
-                         html=registro_mongo['html'],
+                         html_cifraclub=registro_mongo['html_cifraclub'],
                          url_busca_youtube=registro_mongo['url_busca_youtube'],
                          url_video_youtube=response.url,
                          qtd_exibicoes_youtube=0,
@@ -72,42 +72,44 @@ class YoutubespiderSpider(scrapy.Spider):
                          qtd_nao_gostei_youtube=0)
 
 
-
     def parse_video_youtube(self, response):
 
-        registro_mongo = response.meta['registro_mongo']
+        try:
+            registro_mongo = response.meta['registro_mongo']
 
-        regex = re.compile(r'[^0-9]*')
+            regex = re.compile(r'[^0-9]*')
 
-        qtd_exibicoes_youtube_str = response.css("#watch-header .watch-view-count::text")[0].extract()
-        qtd_exibicoes_youtube = int(regex.sub('', qtd_exibicoes_youtube_str))
+            qtd_exibicoes_youtube_str = response.css("#watch-header .watch-view-count::text")[0].extract()
+            qtd_exibicoes_youtube = int(obter_valor_default(regex.sub('', qtd_exibicoes_youtube_str), '0'))
 
-        array_span_rating = response.css(
-            "#watch-header #watch-like-dislike-buttons span.yt-uix-button-content::text").extract()
+            array_span_rating = response.css(
+                "#watch-header #watch-like-dislike-buttons span.yt-uix-button-content::text").extract()
 
-        qtd_gostei_youtube_str = array_span_rating[0]
-        qtd_gostei_youtube = int(regex.sub('', qtd_gostei_youtube_str))
+            qtd_gostei_youtube_str = array_span_rating[0]
+            qtd_gostei_youtube = int(obter_valor_default(regex.sub('', qtd_gostei_youtube_str), '0'))
 
-        qtd_nao_gostei_youtube_srt = array_span_rating[2]
-        qtd_nao_gostei_youtube = int(regex.sub('', qtd_nao_gostei_youtube_srt))
+            qtd_nao_gostei_youtube_srt = array_span_rating[2]
+            qtd_nao_gostei_youtube = int(obter_valor_default(regex.sub('', qtd_nao_gostei_youtube_srt), '0'))
 
-        registro_mongo['qtd_exibicoes_youtube'] = qtd_exibicoes_youtube
-        registro_mongo['qtd_gostei_youtube'] = qtd_gostei_youtube
-        registro_mongo['qtd_nao_gostei_youtube'] = qtd_nao_gostei_youtube
+            registro_mongo['qtd_exibicoes_youtube'] = qtd_exibicoes_youtube
+            registro_mongo['qtd_gostei_youtube'] = qtd_gostei_youtube
+            registro_mongo['qtd_nao_gostei_youtube'] = qtd_nao_gostei_youtube
 
-        yield Musica(_id=registro_mongo['_id'],
-                     estilo=registro_mongo['estilo'],
-                     nome=registro_mongo['_id'],
-                     artista=registro_mongo['artista'],
-                     tom=registro_mongo['_id'],
-                     acordes=registro_mongo['acordes'],
-                     exibicoes_cifraclub=registro_mongo['exibicoes_cifraclub'],
-                     url=registro_mongo['url'],
-                     possui_tabs=registro_mongo['possui_tabs'],
-                     url_cifraclub=registro_mongo['url_cifraclub'],
-                     html=registro_mongo['html'],
-                     url_busca_youtube=registro_mongo['url_busca_youtube'],
-                     url_video_youtube=response.url,
-                     qtd_exibicoes_youtube=qtd_exibicoes_youtube,
-                     qtd_gostei_youtube=qtd_gostei_youtube,
-                     qtd_nao_gostei_youtube=qtd_nao_gostei_youtube)
+            yield Musica(_id=registro_mongo['_id'],
+                         estilo=registro_mongo['estilo'],
+                         nome=registro_mongo['_id'],
+                         artista=registro_mongo['artista'],
+                         tom=registro_mongo['_id'],
+                         acordes=registro_mongo['acordes'],
+                         qtd_exibicoes_cifraclub=registro_mongo['qtd_exibicoes_cifraclub'],
+                         possui_tabs=registro_mongo['possui_tabs'],
+                         url_cifraclub=registro_mongo['url_cifraclub'],
+                         html_cifraclub=registro_mongo['html_cifraclub'],
+                         url_busca_youtube=registro_mongo['url_busca_youtube'],
+                         url_video_youtube=response.url,
+                         qtd_exibicoes_youtube=qtd_exibicoes_youtube,
+                         qtd_gostei_youtube=qtd_gostei_youtube,
+                         qtd_nao_gostei_youtube=qtd_nao_gostei_youtube)
+
+        except BaseException as exc:
+            scrapy.log.msg("Erro ao processar a url <%s>. Detalhes: %s..." % (response.url, exc), loglevel=scrapy.log.ERROR, logstdout=None)

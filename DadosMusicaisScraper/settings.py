@@ -27,7 +27,7 @@ MONGODB_COLLECTION = 'musicas'
 MONGODB_UNIQUE_KEY= '_id'
 
 LOG_LEVEL = 'INFO'
-#CONCURRENT_REQUESTS = 100
+CONCURRENT_REQUESTS = 100
 
 from scrapy import log
 #log.start(logfile="logs/dadosmusicais.log")

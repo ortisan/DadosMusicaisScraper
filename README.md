@@ -1,7 +1,7 @@
 DadosMusicaisScraper
 ================
 
-Obtém os dados musicais através do Cifraclub(acordes, tom, etc) e Youtube (Rating) e exporta para csv.
+Obtém os dados musicais através do Cifraclub(acordes, tom, etc) e Youtube (Ratings) e exporta para csv.
 
 Pré-requisitos
 --------------
@@ -23,8 +23,8 @@ Criação da base no mongod
 Scrape dos dados
 ----------------
 
-1. No diretório do projeto executar: ```python main.py```
-2. No diretório do projeto executar: ```python RatingsYoutube.py``` (APÓS O PASSO 1 TERMINAR)
+1. No diretório do projeto executar: ```python main.py -s CifraClibSpider```
+2. No diretório do projeto executar: ```python main.py -s YoutubeSpider``` (APÓS O PASSO 1 TERMINAR)
 
 Exportação dos dados
 --------------------
