@@ -95,38 +95,13 @@ class CifraClubSpider(scrapy.Spider):
         if len(tom_txt) > 0:
             tom = tom_txt[0].extract()
 
-        acordes = div_cifra.css('pre#ct_cifra b::text').extract()
+        seq_acordes = div_cifra.css('pre#ct_cifra b::text').extract()
 
         capo_txt = div_cifra.css('pre#ct_tom_cifra span#info_capo_cifra a::text')
 
-        scrapy.log.msg(response.url, loglevel=scrapy.log.WARNING, logstdout=None)
+        possui_capo = len(capo_txt) > 0
 
-        for acorde in acordes:
-            if acorde not in self.notas or acorde not in self.notas_bemois:
-                scrapy.log.msg(acorde, loglevel=scrapy.log.WARNING, logstdout=None)
-
-        if len(capo_txt) > 0:
-            capo = int(re.search('(\d+)', capo_txt[0].extract()).group(0))
-            novos_acordes = []
-            for acorde in acordes:
-
-                idx_letra = 1
-                notas = self.notas
-                if acorde.find("#") == 1:
-                    idx_letra = 2
-                if acorde.find("b") == 1:
-                    idx_letra = 2
-                    notas = self.notas_bemois
-
-                try:
-                    idx = notas.index(acorde[0:idx_letra])
-                    # Busco as notas
-                    novo_acorde = notas[(capo + idx) % 12]
-                    novos_acordes.append(novo_acorde + acorde[idx:])
-                except BaseException as exc:
-                    print exc
-
-            acordes = novos_acordes
+        acordes, tonicas, modos, inversoes = obter_unicos_tonicas_modos_inversoes(seq_acordes, capo_txt)
 
         possui_tabs = len(div_cifra.css('span.tablatura')) > 0
 
@@ -138,13 +113,32 @@ class CifraClubSpider(scrapy.Spider):
         # hashlib.sha224(estilo + artista + nome).hexdigest()
         _id = artista + nome_musica
 
+        # yield Musica(_id=_id,
+        #              estilo=estilo,
+        #              nome=nome_musica,
+        #              artista=artista,
+        #              tom=tom,
+        #              possui_tabs=possui_tabs,
+        #              possui_capo=possui_capo,
+        #              seq_acordes=seq_acordes,
+        #              acordes=acordes,
+        #              tonicas = tonicas,
+        #              inversoes = inversoes,
+        #              modos = modos,
+        #              qtd_exibicoes_cifraclub=response.meta['qtd_exibicoes_cifraclub'],
+        #              url_cifraclub=response.url,
+        #              html_cifraclub=html)
         yield Musica(_id=_id,
                      estilo=estilo,
                      nome=nome_musica,
                      artista=artista,
                      tom=tom,
-                     acordes=acordes,
-                     qtd_exibicoes_cifraclub=response.meta['qtd_exibicoes_cifraclub'],
                      possui_tabs=possui_tabs,
-                     url_cifraclub=response.url,
-                     html_cifraclub=html)
+                     possui_capo=possui_capo,
+                     seq_acordes=seq_acordes,
+                     acordes=acordes,
+                     tonicas = tonicas,
+                     inversoes = inversoes,
+                     modos = modos,
+                     qtd_exibicoes_cifraclub=response.meta['qtd_exibicoes_cifraclub'],
+                     url_cifraclub=response.url)

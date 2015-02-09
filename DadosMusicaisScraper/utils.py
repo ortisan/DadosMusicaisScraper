@@ -37,7 +37,7 @@ def obter_unicos_tonicas_modos_inversoes (acordes, capo_txt=''):
     :param acordes: Lista com os acordes.
     :return: listas contendo os acordes unicos, as tonicas, os modos e as inversoes
     """
-
+    capo = 0
     if len(capo_txt) > 0:
         capo = int(re.search('(\d+)', capo_txt[0].extract()).group(0))
 
@@ -47,8 +47,8 @@ def obter_unicos_tonicas_modos_inversoes (acordes, capo_txt=''):
     acordes_unicos = []
 
     for acorde in acordes:
-        if capo > 0 :
 
+        if capo > 0 :
             idx_letra = 1
             notas_local = notas
             if acorde.find("#") == 1:
@@ -56,21 +56,22 @@ def obter_unicos_tonicas_modos_inversoes (acordes, capo_txt=''):
             if acorde.find("b") == 1:
                 idx_letra = 2
                 notas_local = notas_bemois
-                try:
-                    idx = notas.index(acorde[0: idx_letra])
-                    # Busco as notas
-                    novo_acorde = notas_local[(capo + idx) % 12]
-                    acorde = novo_acorde + acorde[idx:]
-                except BaseException as exc:
-                    print exc
+
+            try:
+                idx = notas.index(acorde[0: idx_letra])
+                # Busco as notas
+                novo_acorde = notas_local[(capo + idx) % 12]
+                acorde = novo_acorde + acorde[idx:]
+            except BaseException as exc:
+                print exc
 
         if not acorde in acordes_unicos:
             acordes_unicos.append(acorde)
 
-        tonica, modo, inversao = obter_tonica_modo_inversao(acorde)
-        tonicas.append(tonica)
-        modos.append(modo)
-        inversoes.append(inversao)
+            tonica, modo, inversao = obter_tonica_modo_inversao(acorde)
+            tonicas.append(tonica)
+            modos.append(modo)
+            inversoes.append(inversao)
 
     return acordes_unicos, tonicas, modos, inversoes
 
