@@ -17,17 +17,17 @@ SPIDER_MODULES = ['DadosMusicaisScraper.spiders']
 
 #Instrucoes de: https://github.com/sebdah/scrapy-mongodb
 ITEM_PIPELINES = {
-    #'DadosMusicaisScraper.pipelines.CustomMongoDBPipeline',
-    'scrapy_mongodb.MongoDBPipeline',
+    'DadosMusicaisScraper.pipelines.CustomMongoDBPipeline',
+    #'scrapy_mongodb.MongoDBPipeline',
 }
 
 MONGODB_URI = 'mongodb://localhost:27017'
 MONGODB_DATABASE = 'scrapy'
-MONGODB_COLLECTION = 'musicas'
+MONGODB_COLLECTION = 'musicas2'
 MONGODB_UNIQUE_KEY= '_id'
 
 LOG_LEVEL = 'INFO'
-CONCURRENT_REQUESTS = 100
+LOG_FILE = 'logs/dadosmusicais.log'
+LOG_STDOUT = True
 
-from scrapy import log
-#log.start(logfile="logs/dadosmusicais.log")
+CONCURRENT_REQUESTS = 100

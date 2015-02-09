@@ -10,6 +10,7 @@ from scrapy.http import Request
 from scrapy.selector import Selector
 from selenium import webdriver
 from scrapy import log
+from DadosMusicaisScraper.utils import *
 
 from DadosMusicaisScraper.items import Musica
 
@@ -51,12 +52,14 @@ class CifraClubSpider(scrapy.Spider):
 
                 lista_musicas = self.driver_cifra.find_element_by_css_selector("ol.top.spr1").get_attribute('innerHTML')
 
+                regex = re.compile(r'[^0-9]*')
 
                 for a_musicas in Selector(text=lista_musicas).css('li a'):
                     href_musica = a_musicas.css('::attr(href)')[0].extract()
                     nome_musica = a_musicas.css('strong.top-txt_primary::text')[0].extract()
                     artista = a_musicas.css('strong.top-txt_secondary::text')[0].extract()
-                    qtd_exibicoes_cifraclub = a_musicas.css('small::text')[0].extract()
+                    qtd_exibicoes_cifraclub_str = a_musicas.css('small::text')[0].extract()
+                    qtd_exibicoes_cifraclub = int(obter_valor_default(regex.sub('', qtd_exibicoes_cifraclub_str), '0'))
 
                     scrapy.log.msg(">> Musica <%s - %s (%s)> sera lida..." % (artista, nome_musica, href_musica),
                                    level=scrapy.log.INFO, spider=CifraClubSpider)
@@ -94,13 +97,19 @@ class CifraClubSpider(scrapy.Spider):
 
         acordes = div_cifra.css('pre#ct_cifra b::text').extract()
 
-        capo = None
-
         capo_txt = div_cifra.css('pre#ct_tom_cifra span#info_capo_cifra a::text')
+
+        scrapy.log.msg(response.url, loglevel=scrapy.log.WARNING, logstdout=None)
+
+        for acorde in acordes:
+            if acorde not in self.notas or acorde not in self.notas_bemois:
+                scrapy.log.msg(acorde, loglevel=scrapy.log.WARNING, logstdout=None)
+
         if len(capo_txt) > 0:
             capo = int(re.search('(\d+)', capo_txt[0].extract()).group(0))
             novos_acordes = []
             for acorde in acordes:
+
                 idx_letra = 1
                 notas = self.notas
                 if acorde.find("#") == 1:
