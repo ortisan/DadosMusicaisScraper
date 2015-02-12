@@ -4,17 +4,14 @@
 #
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
-from scrapy_mongodb import MongoDBPipeline
 import datetime
 
+from scrapy_mongodb import MongoDBPipeline
 from pymongo import errors
-from pymongo.mongo_client import MongoClient
-from pymongo.mongo_replica_set_client import MongoReplicaSetClient
-from pymongo.read_preferences import ReadPreference
 from scrapy import log
 
-class CustomMongoDBPipeline(MongoDBPipeline):
 
+class CustomMongoDBPipeline(MongoDBPipeline):
     def insert_item(self, item, spider):
         """ Process the item and add it to MongoDB
 

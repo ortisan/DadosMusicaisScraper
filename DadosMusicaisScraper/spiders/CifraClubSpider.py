@@ -1,21 +1,22 @@
+# -*- coding: utf-8 -*-
+
 __author__ = 'marcelo'
 
 from urlparse import urljoin
 from urlparse import urlsplit
 from urlparse import urlunsplit
-import re
 
 import scrapy
 from scrapy.http import Request
 from scrapy.selector import Selector
 from selenium import webdriver
 from scrapy import log
-from DadosMusicaisScraper.utils import *
 
+from DadosMusicaisScraper.utils import *
 from DadosMusicaisScraper.items import Musica
 
-class CifraClubSpider(scrapy.Spider):
 
+class CifraClubSpider(scrapy.Spider):
     name = 'CifraClubSpider'
     allwed_domains = ['cifraclub.com.br']
     start_urls = ['http://www.cifraclub.com.br/estilos/']
@@ -49,7 +50,6 @@ class CifraClubSpider(scrapy.Spider):
                     else:
                         break
 
-
                 lista_musicas = self.driver_cifra.find_element_by_css_selector("ol.top.spr1").get_attribute('innerHTML')
 
                 regex = re.compile(r'[^0-9]*')
@@ -78,7 +78,8 @@ class CifraClubSpider(scrapy.Spider):
                     yield request
 
             except BaseException as exc:
-                scrapy.log.msg("Erro ao processar o estilo <%s>. Detalhes: %s..." % (nome_estilo, exc), loglevel=scrapy.log.ERROR, logstdout=None)
+                scrapy.log.msg("Erro ao processar o estilo <%s>. Detalhes: %s..." % (nome_estilo, exc),
+                               loglevel=scrapy.log.ERROR, logstdout=None)
 
 
     def parse_musicas(self, response):
@@ -86,12 +87,14 @@ class CifraClubSpider(scrapy.Spider):
         scrapy.log.msg(">> Musica <(%s)> lida..." % (response.url),
                        level=scrapy.log.INFO, spider=CifraClubSpider)
 
-        html = response.body
-
         div_cifra = response.css('#cifra_cnt')
 
+        linhas_html_cifra = div_cifra[0].extract().replace('\t', '').replace('\r', '').split('\n')
+
         tom_txt = div_cifra.css('pre#ct_tom_cifra a#cifra_troca_tom::text')
+
         tom = None
+
         if len(tom_txt) > 0:
             tom = tom_txt[0].extract()
 
@@ -99,35 +102,19 @@ class CifraClubSpider(scrapy.Spider):
 
         capo_txt = div_cifra.css('pre#ct_tom_cifra span#info_capo_cifra a::text')
 
-        possui_capo = len(capo_txt) > 0
+        capo = 0
+        if len(capo_txt) > 0:
+            capo = int(re.search('(\d+)', capo_txt[0].extract()).group(0))
 
-        acordes, tonicas, modos, inversoes = obter_unicos_tonicas_modos_inversoes(seq_acordes, capo_txt)
-
+        possui_capo = capo > 0
         possui_tabs = len(div_cifra.css('span.tablatura')) > 0
-
         nome_musica = response.meta['nome']
         artista = response.meta['artista']
-
         estilo = response.meta['estilo']
         # import hashlib
-        # hashlib.sha224(estilo + artista + nome).hexdigest()
-        _id = artista + nome_musica
+        # hashlib.sha224(artista + ' - ' + nome_musica).hexdigest()
+        _id = artista + ' - ' + nome_musica
 
-        # yield Musica(_id=_id,
-        #              estilo=estilo,
-        #              nome=nome_musica,
-        #              artista=artista,
-        #              tom=tom,
-        #              possui_tabs=possui_tabs,
-        #              possui_capo=possui_capo,
-        #              seq_acordes=seq_acordes,
-        #              acordes=acordes,
-        #              tonicas = tonicas,
-        #              inversoes = inversoes,
-        #              modos = modos,
-        #              qtd_exibicoes_cifraclub=response.meta['qtd_exibicoes_cifraclub'],
-        #              url_cifraclub=response.url,
-        #              html_cifraclub=html)
         yield Musica(_id=_id,
                      estilo=estilo,
                      nome=nome_musica,
@@ -135,10 +122,8 @@ class CifraClubSpider(scrapy.Spider):
                      tom=tom,
                      possui_tabs=possui_tabs,
                      possui_capo=possui_capo,
-                     seq_acordes=seq_acordes,
-                     acordes=acordes,
-                     tonicas = tonicas,
-                     inversoes = inversoes,
-                     modos = modos,
+                     capo=capo,
+                     seq_acordes_brutos=seq_acordes,
                      qtd_exibicoes_cifraclub=response.meta['qtd_exibicoes_cifraclub'],
-                     url_cifraclub=response.url)
+                     url_cifraclub=response.url,
+                     linhas_html_cifraclub=linhas_html_cifra)

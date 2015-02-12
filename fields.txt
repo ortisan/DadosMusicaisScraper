@@ -3,9 +3,11 @@ artista
 nome
 tom
 possui_tabs
+possui_capo
 qtd_exibicoes_cifraclub
 qtd_exibicoes_youtube
 qtd_gostei_youtube
 qtd_nao_gostei_youtube
-acordes
 url_cifraclub
+acordes
+modos

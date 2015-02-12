@@ -1,0 +1,301 @@
+# -*- coding: utf-8 -*-
+__author__ = 'marcelo'
+
+import re
+
+
+def obter_valor_default(valor, valor_default):
+    """
+    Caso o valor seja None ou '', retornamos o valor_default
+    :param valor: Valor que será avaliado
+    :param valor_default: Valor default.
+    :return: Valor caso seja != None e != '', senão valor_default.
+    """
+    retorno = valor
+    if valor is None or valor == '':
+        retorno = valor_default
+    return retorno
+
+
+notas = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#']
+notas_bemois = ['A', 'Bb', 'B', 'C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab']
+
+
+def obter_tonica_modo_inversao(acorde):
+    """
+    Obtem a tônica, o modo e a inversão (caso possua) do acorde.
+    :param acorde: String representando o acorde.
+    :return: string com a tonica, o modo (M-Maior, m-Menor, +-Aumentado, --Diminuto e a inversão.
+    """
+    # acorde = acorde.replace(u'maj', '')
+    # acorde = acorde.replace(u'min', 'm')
+    # acorde = acorde.replace(u'°', '-')
+    # acorde = acorde.replace(u'º', '-')
+    # acorde = acorde.replace(u'aum', '+')
+    # acorde = acorde.replace(u'dim', '-')
+
+    regex_tonica = '([A-G](#|b){0,1})'
+    regex_maior = '(7M|maj){0,1}'
+    regex_menor = '(m|min){0,1}'
+    regex_dominante = '(7|aum){0,1}'
+    regex_diminuto = '(dim|º|°)'
+    regex_inversao = '\/{0,1}([A-G]#{0,1}|b{0,1})'
+
+
+    m = re.search(regex_tonica + regex_maior + regex_menor + regex_inversao, acorde)
+
+
+
+    # regex_notas_acrescentadas = '(\d){0,2}'
+    # regex_modo = '(m|\+|-){0,1}'
+    # regex_inversao = '\/{0,1}([A-G]#{0,1}|b{0,1})'
+    # m = re.search(regex_tonica + regex_notas_acrescentadas + regex_modo + regex_inversao, acorde)
+    tonica = obter_valor_default(m.group(1), '')
+    modo = obter_valor_default(m.group(4), 'M')
+    inversao = obter_valor_default(m.group(5), '')
+    return tonica, modo, inversao
+
+
+def obter_nota_normalizada_por_capo(p_nota, capo):
+    idx_letra = 1
+    notas_local = notas
+    if p_nota.find("#") == 1:
+        idx_letra = 2
+    if p_nota.find("b") == 1:
+        idx_letra = 2
+        notas_local = notas_bemois
+    try:
+        idx = notas.index(p_nota[0: idx_letra])
+        # Busco as notas
+        nova_nota = notas_local[(capo + idx) % 12]
+        nota = nova_nota + p_nota[idx_letra:]
+    except BaseException as exc:
+        print exc
+
+    return nota
+
+
+def obter_unicos_tonicas_modos_inversoes(acordes, capo=0):
+    """
+    Dada uma lista de acordes, devolvemos os acordes unicos, as tonicas de cada acorde, os modos de cada acorde e as inversoes de cada acorde.
+    :param acordes: Lista com os acordes.
+    :param capo: casa em que o capotraste está.
+    :return: listas contendo os acordes únicos, as tônicas, os modos e as inversões.
+    """
+    tonicas = []
+    modos = []
+    inversoes = []
+    acordes_unicos = []
+
+    for acorde in acordes:
+        tonica, modo, inversao = obter_tonica_modo_inversao(acorde)
+        if capo > 0:
+            novo_acorde = obter_nota_normalizada_por_capo(tonica, capo)
+            novo_acorde = novo_acorde + modo if modo
+            possui_inversao = len(inversao) > 0
+            if possui_inversao:
+                nova_inversao = obter_nota_normalizada_por_capo(tonica, capo)
+                novo_acorde = novo_acorde + '/' + nova_inversao
+            acorde = novo_acorde
+
+        if not acorde in acordes_unicos:
+            acordes_unicos.append(acorde)
+            tonicas.append(tonica)
+            modos.append(modo)
+            inversoes.append(inversao)
+
+    return acordes_unicos, tonicas, modos, inversoes
+
+
+if __name__ == '__main__':
+    # TODO CRIAR TESTE UNITARIO
+
+    tonica, modo, inversao = obter_tonica_modo_inversao('G')
+    assert (tonica == 'G')
+
+    tonica, modo, inversao = obter_tonica_modo_inversao('Gm')
+    assert (tonica == 'G' and modo == 'm')
+
+    tonica, modo, inversao = obter_tonica_modo_inversao('F#')
+    assert (tonica == 'F#')
+
+    tonica, modo, inversao = obter_tonica_modo_inversao('Ab')
+    assert (tonica == 'Ab')
+
+    tonica, modo, inversao = obter_tonica_modo_inversao(u'F°')
+    assert (tonica == 'F' and modo == '-' and inversao == '')
+
+    tonica, modo, inversao = obter_tonica_modo_inversao('E/G#')
+    assert (tonica == 'E' and modo == 'M' and inversao == 'G#')
+
+    tonica, modo, inversao = obter_tonica_modo_inversao('G4')
+    assert (tonica == 'G' and modo == 'M' and inversao == '')
+
+    tonica, modo, inversao = obter_tonica_modo_inversao('F7M')
+    assert (tonica == 'F' and modo == 'M' and inversao == '')
+
+    tonica, modo, inversao = obter_tonica_modo_inversao('C#7+')
+    assert (tonica == 'C#' and modo == '+' and inversao == '')
+
+    tonica, modo, inversao = obter_tonica_modo_inversao(u'Cº')
+    assert (tonica == 'C' and modo == '-' and inversao == '')
+
+    tonica, modo, inversao = obter_tonica_modo_inversao('G#7(#5)')
+    assert (tonica == 'G#' and modo == 'M' and inversao == '')
+
+    tonica, modo, inversao = obter_tonica_modo_inversao('E7+')
+    assert (tonica == 'E' and modo == '+' and inversao == '')
+
+    tonica, modo, inversao = obter_tonica_modo_inversao('Amaj7')
+    assert (tonica == 'A' and modo == 'M' and inversao == '')
+
+    tonica, modo, inversao = obter_tonica_modo_inversao('Fmin+11')
+    assert (tonica == 'F' and modo == 'm' and inversao == '')
+
+    tonica, modo, inversao = obter_tonica_modo_inversao('A7+')
+    assert (tonica == 'A' and modo == '+' and inversao == '')
+
+    tonica, modo, inversao = obter_tonica_modo_inversao('Caum(C5+)')
+    assert (tonica == 'C' and modo == '+' and inversao == '')
+
+    tonica, modo, inversao = obter_tonica_modo_inversao('A/F#')
+    assert (tonica == 'A' and modo == 'M' and inversao == 'F#')
+
+    tonica, modo, inversao = obter_tonica_modo_inversao('G/13')
+    # TODO VERIFICAR ESSA REGRA DE INVERSAO
+    assert (tonica == 'G' and modo == 'M' and inversao == '')
+
+    tonica, modo, inversao = obter_tonica_modo_inversao('G7/D')
+    # TODO VERIFICAR ESSA REGRA DE INVERSAO
+    assert (tonica == 'G' and modo == 'M' and inversao == 'D')
+
+    acordes = ['G7/D', 'Am', 'C7+', u'D#º', 'Dm7', 'G11', 'G7', 'C7+', 'G7/5+', 'Em7', u'D#º', 'Dm7', 'Dm4/7', 'C#7/5-',
+               'C7+', 'G7/13', 'C7+', u'D#º', 'Dm7', 'G11', 'G7', 'Gm7', 'C7/13', 'F7+', 'G#7/9', 'Em7', 'A7/9-', 'D7',
+               'G7/9-', 'C7+', 'G7/13', 'C7+', u'D#º', 'Dm7', 'G11', 'G7', 'C7+', 'G7/5+', 'Em7', u'D#º', 'Dm7',
+               'Dm4/7', 'C#7/5-', 'C7+', 'G7/13', 'C7+', u'D#º', 'Dm7', 'G11', 'G7', 'Gm7', 'C7/13', 'F7+', 'G#7/9',
+               'Em7', 'A7/9-', 'D7', 'G7/9-', 'C7+']
+
+    acordes_unicos, tonicas, modos, inversoes = obter_unicos_tonicas_modos_inversoes(acordes)
+
+    assert (len(acordes_unicos) < len(acordes))
+
+    acordes = [
+        "C",
+        "D",
+        "Em",
+        "Em/B",
+        "C",
+        "D",
+        "Em",
+        "D9",
+        "Em",
+        "Bm",
+        "Em",
+        "Bm",
+        "Em",
+        "Bm",
+        "Am",
+        "D9",
+        "D9",
+        "Em",
+        "Bm",
+        "Em",
+        "Bm",
+        "Em",
+        "Bm",
+        "Am",
+        "D9",
+        "C",
+        "D",
+        "Em",
+        "Em/B",
+        "C",
+        "D",
+        "Em",
+        "D9",
+        "C",
+        "D",
+        "Em",
+        "Em/B",
+        "C",
+        "D",
+        "Em",
+        "D9",
+        "Em",
+        "Bm",
+        "Em",
+        "Bm",
+        "Em",
+        "Bm",
+        "Am",
+        "D9",
+        "D9",
+        "Em",
+        "Bm",
+        "Em",
+        "Bm",
+        "Em",
+        "Bm",
+        "Am",
+        "D9",
+        "C",
+        "D",
+        "Em",
+        "Em/B",
+        "C",
+        "D",
+        "Em",
+        "D9",
+        "Em",
+        "D",
+        "C",
+        "D",
+        "G",
+        "A9",
+        "G",
+        "A9",
+        "G",
+        "A9",
+        "G",
+        "A9",
+        "Em",
+        "Bm",
+        "Em",
+        "Bm",
+        "Em",
+        "Bm",
+        "Am",
+        "D9",
+        "C",
+        "D",
+        "Em",
+        "Em/B",
+        "C",
+        "D",
+        "Em",
+        "C",
+        "D",
+        "Em",
+        "Em/B",
+        "C",
+        "D",
+        "Em",
+        "Em/B",
+        "C",
+        "D",
+        "Em",
+        "Em/B",
+        "C",
+        "D",
+        "Em",
+        "D9",
+        "Em"
+    ]
+
+    acordes_unicos, tonicas, modos, inversoes = obter_unicos_tonicas_modos_inversoes(acordes, 5)
+
+    assert (len(acordes_unicos) < len(acordes))
+
+
+
+

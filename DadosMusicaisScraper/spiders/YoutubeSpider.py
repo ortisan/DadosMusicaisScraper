@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from urlparse import urlsplit
 from urlparse import urlunsplit
-import re
 
 import scrapy
 from pymongo import MongoClient
@@ -11,8 +10,8 @@ from DadosMusicaisScraper.settings import *
 from DadosMusicaisScraper.items import Musica
 from DadosMusicaisScraper.utils import *
 
-class YoutubespiderSpider(scrapy.Spider):
 
+class YoutubespiderSpider(scrapy.Spider):
     name = "YoutubeSpider"
     allowed_domains = ["youtube.com"]
     start_urls = ['http://www.youtube.com/']
@@ -38,9 +37,9 @@ class YoutubespiderSpider(scrapy.Spider):
 
             url_busca_video = urlunsplit((scheme, netloc, path, query, fragment))
 
-            ## TRANSPORTA DADOS PARA O PROXIMO CALLBACK
             request = Request(url_busca_video, callback=self.parse_listagem_videos)
 
+            ## TRANSPORTA DADOS PARA O PROXIMO CALLBACK
             registro_mongo['url_busca_youtube'] = url_busca_video
             request.meta['registro_mongo'] = registro_mongo
 
@@ -60,11 +59,15 @@ class YoutubespiderSpider(scrapy.Spider):
                          nome=registro_mongo['nome'],
                          artista=registro_mongo['artista'],
                          tom=registro_mongo['tom'],
-                         acordes=registro_mongo['acordes'],
-                         qtd_exibicoes_cifraclub=registro_mongo['qtd_exibicoes_cifraclub'],
                          possui_tabs=registro_mongo['possui_tabs'],
+                         possui_capo=registro_mongo['possui_capo'],
+                         seq_acordes=registro_mongo['seq_acordes'],
+                         tonicas_acordes=registro_mongo['tonicas'],
+                         modos=registro_mongo['modos'],
+                         inversoes=registro_mongo['inversoes'],
+                         qtd_exibicoes_cifraclub=registro_mongo['qtd_exibicoes_cifraclub'],
                          url_cifraclub=registro_mongo['url_cifraclub'],
-                         html_cifraclub=registro_mongo['html_cifraclub'],
+                         linhas_html_cifraclub=registro_mongo['linhas_html_cifraclub'],
                          url_busca_youtube=registro_mongo['url_busca_youtube'],
                          url_video_youtube=response.url,
                          qtd_exibicoes_youtube=0,
@@ -85,10 +88,10 @@ class YoutubespiderSpider(scrapy.Spider):
             array_span_rating = response.css(
                 "#watch-header #watch-like-dislike-buttons span.yt-uix-button-content::text").extract()
 
-            qtd_gostei_youtube_str = array_span_rating[0]
+            qtd_gostei_youtube_str = array_span_rating[0] if len(array_span_rating) > 0 else '0'
             qtd_gostei_youtube = int(obter_valor_default(regex.sub('', qtd_gostei_youtube_str), '0'))
 
-            qtd_nao_gostei_youtube_srt = array_span_rating[2]
+            qtd_nao_gostei_youtube_srt = array_span_rating[2] if len(array_span_rating) >= 3 else '0'
             qtd_nao_gostei_youtube = int(obter_valor_default(regex.sub('', qtd_nao_gostei_youtube_srt), '0'))
 
             registro_mongo['qtd_exibicoes_youtube'] = qtd_exibicoes_youtube
@@ -100,16 +103,20 @@ class YoutubespiderSpider(scrapy.Spider):
                          nome=registro_mongo['nome'],
                          artista=registro_mongo['artista'],
                          tom=registro_mongo['tom'],
-                         acordes=registro_mongo['acordes'],
-                         qtd_exibicoes_cifraclub=registro_mongo['qtd_exibicoes_cifraclub'],
                          possui_tabs=registro_mongo['possui_tabs'],
+                         possui_capo=registro_mongo['possui_capo'],
+                         seq_acordes=registro_mongo['seq_acordes'],
+                         tonicas_acordes=registro_mongo['tonicas'],
+                         modos=registro_mongo['modos'],
+                         inversoes=registro_mongo['inversoes'],
+                         qtd_exibicoes_cifraclub=registro_mongo['qtd_exibicoes_cifraclub'],
                          url_cifraclub=registro_mongo['url_cifraclub'],
-                         html_cifraclub=registro_mongo['html_cifraclub'],
+                         linhas_html_cifraclub=registro_mongo['linhas_html_cifraclub'],
                          url_busca_youtube=registro_mongo['url_busca_youtube'],
                          url_video_youtube=response.url,
                          qtd_exibicoes_youtube=qtd_exibicoes_youtube,
                          qtd_gostei_youtube=qtd_gostei_youtube,
                          qtd_nao_gostei_youtube=qtd_nao_gostei_youtube)
-
         except BaseException as exc:
-            scrapy.log.msg("Erro ao processar a url <%s>. Detalhes: %s..." % (response.url, exc), loglevel=scrapy.log.ERROR, logstdout=None)
+            scrapy.log.msg("Erro ao processar a url <%s>. Detalhes: %s..." % (response.url, exc),
+                           loglevel=scrapy.log.ERROR, logstdout=None)
