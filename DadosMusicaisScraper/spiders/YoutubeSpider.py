@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from urlparse import urlsplit
 from urlparse import urlunsplit
+import re
 
 import scrapy
 from pymongo import MongoClient
@@ -55,16 +56,16 @@ class YoutubespiderSpider(scrapy.Spider):
             yield request
         else:
             yield Musica(_id=registro_mongo['_id'],
+                         dt_insercao=registro_mongo['dt_insercao'],
                          estilo=registro_mongo['estilo'],
                          nome=registro_mongo['nome'],
                          artista=registro_mongo['artista'],
                          tom=registro_mongo['tom'],
                          possui_tabs=registro_mongo['possui_tabs'],
                          possui_capo=registro_mongo['possui_capo'],
+                         capo=registro_mongo['capo'],
                          seq_acordes=registro_mongo['seq_acordes'],
-                         tonicas_acordes=registro_mongo['tonicas'],
-                         modos=registro_mongo['modos'],
-                         inversoes=registro_mongo['inversoes'],
+                         seq_acordes_brutos=registro_mongo['seq_acordes_brutos'],
                          qtd_exibicoes_cifraclub=registro_mongo['qtd_exibicoes_cifraclub'],
                          url_cifraclub=registro_mongo['url_cifraclub'],
                          linhas_html_cifraclub=registro_mongo['linhas_html_cifraclub'],
@@ -94,21 +95,29 @@ class YoutubespiderSpider(scrapy.Spider):
             qtd_nao_gostei_youtube_srt = array_span_rating[2] if len(array_span_rating) >= 3 else '0'
             qtd_nao_gostei_youtube = int(obter_valor_default(regex.sub('', qtd_nao_gostei_youtube_srt), '0'))
 
-            registro_mongo['qtd_exibicoes_youtube'] = qtd_exibicoes_youtube
-            registro_mongo['qtd_gostei_youtube'] = qtd_gostei_youtube
-            registro_mongo['qtd_nao_gostei_youtube'] = qtd_nao_gostei_youtube
+            dt_publicacao_str = response.css(".watch-time-text::text")[0].extract();
+
+            import datetime
+
+            dt_publicacao_str = re.sub('\w+\son\s', '', dt_publicacao_str)
+
+            dt_publicacao = datetime.datetime.strptime(dt_publicacao_str, '%b %d, %Y')
+            data_atual = datetime.datetime.today()
+            delta = data_atual - dt_publicacao
+
+            dias = delta.days
 
             yield Musica(_id=registro_mongo['_id'],
+                         dt_insercao=registro_mongo['dt_insercao'],
                          estilo=registro_mongo['estilo'],
                          nome=registro_mongo['nome'],
                          artista=registro_mongo['artista'],
                          tom=registro_mongo['tom'],
                          possui_tabs=registro_mongo['possui_tabs'],
                          possui_capo=registro_mongo['possui_capo'],
+                         capo=registro_mongo['capo'],
                          seq_acordes=registro_mongo['seq_acordes'],
-                         tonicas_acordes=registro_mongo['tonicas'],
-                         modos=registro_mongo['modos'],
-                         inversoes=registro_mongo['inversoes'],
+                         seq_acordes_brutos=registro_mongo['seq_acordes_brutos'],
                          qtd_exibicoes_cifraclub=registro_mongo['qtd_exibicoes_cifraclub'],
                          url_cifraclub=registro_mongo['url_cifraclub'],
                          linhas_html_cifraclub=registro_mongo['linhas_html_cifraclub'],
@@ -116,7 +125,10 @@ class YoutubespiderSpider(scrapy.Spider):
                          url_video_youtube=response.url,
                          qtd_exibicoes_youtube=qtd_exibicoes_youtube,
                          qtd_gostei_youtube=qtd_gostei_youtube,
-                         qtd_nao_gostei_youtube=qtd_nao_gostei_youtube)
+                         qtd_nao_gostei_youtube=qtd_nao_gostei_youtube,
+                         dt_publicacao_youtube=dt_publicacao,
+                         dias_desde_publicacao_youtube=dias)
+
         except BaseException as exc:
             scrapy.log.msg("Erro ao processar a url <%s>. Detalhes: %s..." % (response.url, exc),
                            loglevel=scrapy.log.ERROR, logstdout=None)

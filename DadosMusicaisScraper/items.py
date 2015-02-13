@@ -3,6 +3,7 @@ import scrapy
 
 class Musica(scrapy.Item):
     _id = scrapy.Field()
+    dt_insercao = scrapy.Field()
     estilo = scrapy.Field()
     nome = scrapy.Field()
     artista = scrapy.Field()
@@ -24,4 +25,7 @@ class Musica(scrapy.Item):
     linhas_html_cifraclub = scrapy.Field()
     url_busca_youtube = scrapy.Field()
     url_video_youtube = scrapy.Field()
+    dt_publicacao_youtube = scrapy.Field()
+    dias_desde_publicacao_youtube = scrapy.Field()
+
 

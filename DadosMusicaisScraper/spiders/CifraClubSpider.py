@@ -5,6 +5,7 @@ __author__ = 'marcelo'
 from urlparse import urljoin
 from urlparse import urlsplit
 from urlparse import urlunsplit
+import datetime
 
 import scrapy
 from scrapy.http import Request
@@ -116,6 +117,7 @@ class CifraClubSpider(scrapy.Spider):
         _id = artista + ' - ' + nome_musica
 
         yield Musica(_id=_id,
+                     dt_insercao=datetime.datetime.today(),
                      estilo=estilo,
                      nome=nome_musica,
                      artista=artista,

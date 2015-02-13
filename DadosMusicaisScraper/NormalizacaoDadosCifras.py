@@ -44,6 +44,6 @@ def normalizar_dados_cifras(idx, qtd):
 if __name__ == "__main__":
     qtd_registros = colecao.count()
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=3) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
         for i in range(0, qtd_registros, 50):
             executor.submit(normalizar_dados_cifras, i, 50)

@@ -25,6 +25,14 @@ if __name__ == '__main__':
     x = harmony.ChordSymbol('G#7')
 
 
+    import datetime
+    dt_publicacao_str = 'Publicado em 14 de jul de 2014'
+    dt_publicacao = datetime.datetime.strptime(dt_publicacao_str, 'Publicado em %d de %b de %Y')
+    data_atual = datetime.datetime.today()
+    delta = data_atual - dt_publicacao
+
+    dias = delta.days
+
 
 
 
