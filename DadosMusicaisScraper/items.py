@@ -8,7 +8,6 @@ class Musica(scrapy.Item):
     nome = scrapy.Field()
     artista = scrapy.Field()
     tom = scrapy.Field()
-    seq_acordes_brutos = scrapy.Field()
     seq_acordes = scrapy.Field()
     acordes = scrapy.Field()
     tonicas = scrapy.Field()

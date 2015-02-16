@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from urlparse import urlsplit
 from urlparse import urlunsplit
-import re
 
 import scrapy
 from pymongo import MongoClient
@@ -12,8 +11,8 @@ from DadosMusicaisScraper.items import Musica
 from DadosMusicaisScraper.utils import *
 
 
-class YoutubespiderSpider(scrapy.Spider):
-    name = "YoutubeSpider"
+class RatingsYoutubeSpider(scrapy.Spider):
+    name = "RatingsYoutubeSpider"
     allowed_domains = ["youtube.com"]
     start_urls = ['http://www.youtube.com/']
 
@@ -117,7 +116,6 @@ class YoutubespiderSpider(scrapy.Spider):
                          possui_capo=registro_mongo['possui_capo'],
                          capo=registro_mongo['capo'],
                          seq_acordes=registro_mongo['seq_acordes'],
-                         seq_acordes_brutos=registro_mongo['seq_acordes_brutos'],
                          qtd_exibicoes_cifraclub=registro_mongo['qtd_exibicoes_cifraclub'],
                          url_cifraclub=registro_mongo['url_cifraclub'],
                          linhas_html_cifraclub=registro_mongo['linhas_html_cifraclub'],

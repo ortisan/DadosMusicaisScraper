@@ -6,7 +6,6 @@ import scrapy
 from scrapy import log
 
 from utils import *
-
 from DadosMusicaisScraper.settings import *
 
 

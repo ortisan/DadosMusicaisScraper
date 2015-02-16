@@ -17,8 +17,8 @@ from DadosMusicaisScraper.utils import *
 from DadosMusicaisScraper.items import Musica
 
 
-class CifraClubSpider(scrapy.Spider):
-    name = 'CifraClubSpider'
+class MusicasPorEstiloCifraClubSpider(scrapy.Spider):
+    name = 'MusicasPorEstiloCifraClubSpider'
     allwed_domains = ['cifraclub.com.br']
     start_urls = ['http://www.cifraclub.com.br/estilos/']
 
@@ -36,7 +36,7 @@ class CifraClubSpider(scrapy.Spider):
                 nome_estilo = a_estilo.css('::text')[0].extract()
 
                 scrapy.log.msg(">> Estilo <%s (%s)> sera processado..." % (nome_estilo, href_estilo),
-                               level=scrapy.log.INFO, spider=CifraClubSpider)
+                               level=scrapy.log.INFO)
 
                 self.driver_cifra.get(urljoin(response.url, href_estilo))
 
@@ -63,7 +63,7 @@ class CifraClubSpider(scrapy.Spider):
                     qtd_exibicoes_cifraclub = int(obter_valor_default(regex.sub('', qtd_exibicoes_cifraclub_str), '0'))
 
                     scrapy.log.msg(">> Musica <%s - %s (%s)> sera lida..." % (artista, nome_musica, href_musica),
-                                   level=scrapy.log.INFO, spider=CifraClubSpider)
+                                   level=scrapy.log.INFO)
 
                     scheme, netloc, path, query, fragment = urlsplit(response.url)
                     path = href_musica
@@ -86,7 +86,7 @@ class CifraClubSpider(scrapy.Spider):
     def parse_musicas(self, response):
 
         scrapy.log.msg(">> Musica <(%s)> lida..." % (response.url),
-                       level=scrapy.log.INFO, spider=CifraClubSpider)
+                       level=scrapy.log.INFO)
 
         div_cifra = response.css('#cifra_cnt')
 
@@ -125,7 +125,7 @@ class CifraClubSpider(scrapy.Spider):
                      possui_tabs=possui_tabs,
                      possui_capo=possui_capo,
                      capo=capo,
-                     seq_acordes_brutos=seq_acordes,
+                     seq_acordes=seq_acordes,
                      qtd_exibicoes_cifraclub=response.meta['qtd_exibicoes_cifraclub'],
                      url_cifraclub=response.url,
                      linhas_html_cifraclub=linhas_html_cifra)

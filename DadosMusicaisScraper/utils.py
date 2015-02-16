@@ -75,7 +75,6 @@ def trocar_notacao_acordes(acorde):
 
 
 def obter_unicos_tonicas_baixos_modos(acordes, capo=0):
-
     tonicas = []
     baixos = []
     modos = []
@@ -98,7 +97,7 @@ def obter_unicos_tonicas_baixos_modos(acordes, capo=0):
                     # for nota_str in notas:
                     # nota_obj = Note(nota_str)
                     # nova_nota_int = int(nota_obj) + capo
-                    #     nota_obj.from_int(nova_nota_int)
+                    # nota_obj.from_int(nova_nota_int)
                     #     novas_notas.append(nota_obj.name)
                     # notas = novas_notas
                     #novo_acorde = harmony.ChordSymbol(acorde)
@@ -176,10 +175,6 @@ if __name__ == '__main__':
     regex_nota = u'([A-G]#*4*(M7)*(7(?!M))*)'
 
     m = re.match(regex_nota, "D7M")
-
-
-
-    print x
 
     novo_acorde = trocar_notacao_acordes(u'D7M')
 
@@ -325,7 +320,7 @@ if __name__ == '__main__':
     # 'C7+', 'G7/13', 'C7+', u'D#º', 'Dm7', 'G11', 'G7', 'Gm7', 'C7/13', 'F7+', 'G#7/9', 'Em7', 'A7/9-', 'D7',
     # 'G7/9-', 'C7+', 'G7/13', 'C7+', u'D#º', 'Dm7', 'G11', 'G7', 'C7+', 'G7/5+', 'Em7', u'D#º', 'Dm7',
     # 'Dm4/7', 'C#7/5-', 'C7+', 'G7/13', 'C7+', u'D#º', 'Dm7', 'G11', 'G7', 'Gm7', 'C7/13', 'F7+', 'G#7/9',
-    #            'Em7', 'A7/9-', 'D7', 'G7/9-', 'C7+']
+    # 'Em7', 'A7/9-', 'D7', 'G7/9-', 'C7+']
     #
     # acordes_unicos, tonicas, modos, inversoes = obter_unicos_tonicas_modos_inversoes(acordes)
     #
