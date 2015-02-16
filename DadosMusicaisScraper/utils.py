@@ -9,7 +9,7 @@ from music21 import harmony
 from music21 import interval
 
 
-logging.basicConfig(filename="logs/utils.log", level=logging.INFO)
+#logging.basicConfig(filename="logs/utils.log", level=logging.INFO)
 
 # acorde = acorde.replace(u'4', 'sus4')
 regex_nota = u'([A-G]#*4*(M7)*(7(?!M))*)'
@@ -143,6 +143,21 @@ if __name__ == '__main__':
 
     novo_acorde = harmony.ChordSymbol('C#7')
     [str(p) for p in novo_acorde.pitches]
+
+    novo_acorde = harmony.ChordSymbol('AmM7')
+    [str(p) for p in novo_acorde.pitches]
+
+    novo_acorde = harmony.ChordSymbol('A6')
+    [str(p) for p in novo_acorde.pitches]
+
+    novo_acorde = harmony.ChordSymbol('B/A')
+    [str(p) for p in novo_acorde.pitches]
+
+
+
+
+
+
 
 
 

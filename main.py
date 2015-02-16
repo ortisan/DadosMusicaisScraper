@@ -1,7 +1,11 @@
+# -*- coding: utf-8 -*-
 __author__ = 'marcelo'
 
+import sys
+import getopt
+
 from scrapy import cmdline
-import sys, getopt
+
 
 def main(argv):
     try:
@@ -17,5 +21,6 @@ def main(argv):
         print 'Erro!\nUtilize o comando: main.py -s <nome do spider>'
         sys.exit(2)
 
+
 if __name__ == "__main__":
-   main(sys.argv[1:])
+    main(sys.argv[1:])

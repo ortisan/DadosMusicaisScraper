@@ -1,7 +1,8 @@
-Scrapy==0.24.0
-pymongo==2.7.2
-scrapy-mongodb==0.7.3
+Scrapy==0.24.4
+pymongo==2.8
+scrapy-mongodb==0.8.0
 selenium==2.44.0
 music21==1.9.3
+matplotlib==1.4.2
+scipy==0.15.1
 mingus==0.5.0
-

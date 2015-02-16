@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 __author__ = 'marcelo'
 
 from urlparse import urljoin
@@ -23,9 +22,6 @@ class MusicasPorEstiloCifraClubSpider(scrapy.Spider):
     start_urls = ['http://www.cifraclub.com.br/estilos/']
 
     def __init__(self):
-        self.notas = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#']
-        self.notas_bemois = ['A', 'Bb', 'B', 'C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab']
-
         self.driver_cifra = webdriver.Firefox()
 
 

@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+__author__ = 'marcelo'
+
 from urlparse import urlsplit
 from urlparse import urlunsplit
 
@@ -46,34 +48,20 @@ class RatingsYoutubeSpider(scrapy.Spider):
             yield request
 
     def parse_listagem_videos(self, response):
-        link_video = response.css("ol#section-list div.yt-lockup-video:nth-child(1) a")
-        registro_mongo = response.meta['registro_mongo']
-        if (len(link_video) > 0):
-            url_video_youtube = 'https://www.youtube.com' + link_video[0].css('::attr(href)')[0].extract()
+        try :
+            link_video = response.css("ol#section-list div.yt-lockup-video:nth-child(1) a")
+            registro_mongo = response.meta['registro_mongo']
+            url_video_youtube = 'https://www.youtube.com'
+
+            if (len(link_video) > 0):
+                url_video_youtube = url_video_youtube + link_video[0].css('::attr(href)')[0].extract()
+
             request = Request(url_video_youtube, callback=self.parse_video_youtube)
             request.meta['registro_mongo'] = registro_mongo
             yield request
-        else:
-            yield Musica(_id=registro_mongo['_id'],
-                         dt_insercao=registro_mongo['dt_insercao'],
-                         estilo=registro_mongo['estilo'],
-                         nome=registro_mongo['nome'],
-                         artista=registro_mongo['artista'],
-                         tom=registro_mongo['tom'],
-                         possui_tabs=registro_mongo['possui_tabs'],
-                         possui_capo=registro_mongo['possui_capo'],
-                         capo=registro_mongo['capo'],
-                         seq_acordes=registro_mongo['seq_acordes'],
-                         seq_acordes_brutos=registro_mongo['seq_acordes_brutos'],
-                         qtd_exibicoes_cifraclub=registro_mongo['qtd_exibicoes_cifraclub'],
-                         url_cifraclub=registro_mongo['url_cifraclub'],
-                         linhas_html_cifraclub=registro_mongo['linhas_html_cifraclub'],
-                         url_busca_youtube=registro_mongo['url_busca_youtube'],
-                         url_video_youtube=response.url,
-                         qtd_exibicoes_youtube=0,
-                         qtd_gostei_youtube=0,
-                         qtd_nao_gostei_youtube=0)
-
+        except BaseException as exc:
+            scrapy.log.msg("Erro ao processar a url <%s>. Detalhes: %s..." % (response.url, exc),
+                           loglevel=scrapy.log.ERROR)
 
     def parse_video_youtube(self, response):
 
@@ -129,4 +117,23 @@ class RatingsYoutubeSpider(scrapy.Spider):
 
         except BaseException as exc:
             scrapy.log.msg("Erro ao processar a url <%s>. Detalhes: %s..." % (response.url, exc),
-                           loglevel=scrapy.log.ERROR, logstdout=None)
+                           loglevel=scrapy.log.ERROR)
+
+            yield Musica(_id=registro_mongo['_id'],
+                         dt_insercao=registro_mongo['dt_insercao'],
+                         estilo=registro_mongo['estilo'],
+                         nome=registro_mongo['nome'],
+                         artista=registro_mongo['artista'],
+                         tom=registro_mongo['tom'],
+                         possui_tabs=registro_mongo['possui_tabs'],
+                         possui_capo=registro_mongo['possui_capo'],
+                         capo=registro_mongo['capo'],
+                         seq_acordes=registro_mongo['seq_acordes'],
+                         qtd_exibicoes_cifraclub=registro_mongo['qtd_exibicoes_cifraclub'],
+                         url_cifraclub=registro_mongo['url_cifraclub'],
+                         linhas_html_cifraclub=registro_mongo['linhas_html_cifraclub'],
+                         url_busca_youtube=registro_mongo['url_busca_youtube'],
+                         url_video_youtube=response.url,
+                         qtd_exibicoes_youtube=0,
+                         qtd_gostei_youtube=0,
+                         qtd_nao_gostei_youtube=0)

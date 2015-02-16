@@ -31,3 +31,10 @@ Exportação dos dados
 --------------------
 
 1. ```mongoexport --db scrapy --collection musicas --csv --fieldFile ./fields.txt --out ./musicas.csv```
+
+OBSERVAÇÕES
+-----------
+
+* Na bilioteca music21, os bemois ("b"), são traduzidos para "-" ex: Bb == B-.
+* Tudo entre parêntesis, são notas acrescentadas, ex: Am(7M) == Am com 7 maior.
+

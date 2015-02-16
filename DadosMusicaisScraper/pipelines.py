@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+from scrapy.exceptions import DropItem
+
+__author__ = 'marcelo'
+
 
 # Define your item pipelines here
 #
@@ -54,13 +58,22 @@ class CustomMongoDBPipeline(MongoDBPipeline):
             else:
                 key[self.config['unique_key']] = item[self.config['unique_key']]
 
-            self.collection.update(key, item, upsert=True)
+            try:
+                self.collection.update(key, item, upsert=True)
+                log.msg(
+                    'Stored item(s) in MongoDB {0}/{1}'.format(
+                        self.config['database'], self.config['collection']),
+                    level=log.DEBUG,
+                    spider=spider)
+            except BaseException as exc:
+                mensagem = 'Error insert or update item(s) in MongoDB {0}/{1}: {2}'.format(
+                    self.config['database'], self.config['collection'], exc)
 
-            log.msg(
-                'Stored item(s) in MongoDB {0}/{1}'.format(
-                    self.config['database'], self.config['collection']),
-                level=log.DEBUG,
-                spider=spider)
+                log.msg(mensagem,
+                        level=log.ERROR,
+                        spider=spider)
+
+                raise DropItem(mensagem)
 
         return item
 

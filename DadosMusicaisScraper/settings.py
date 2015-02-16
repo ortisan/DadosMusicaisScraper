@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+__author__ = 'marcelo'
+
 
 # Scrapy settings for CifraClubScraperUngit project
 #
@@ -12,9 +14,9 @@ BOT_NAME = 'DadosMusicaisScraper'
 
 SPIDER_MODULES = ['DadosMusicaisScraper.spiders']
 
-LOG_LEVEL = 'INFO'
-LOG_FILE = 'logs/dadosmusicais.log'
-LOG_STDOUT = True
+#LOG_LEVEL = 'DEBUG'
+#LOG_FILE = 'logs/dadosmusicais.log'
+#LOG_STDOUT = True
 
 CONCURRENT_REQUESTS = 100
 
@@ -22,12 +24,13 @@ MONGODB_URI = 'mongodb://localhost:27017'
 MONGODB_DATABASE = 'scrapy'
 MONGODB_COLLECTION = 'musicas'
 MONGODB_UNIQUE_KEY = '_id'
+# MONGODB_BUFFER_DATA = 1
 
 
 # Instrucoes de: https://github.com/sebdah/scrapy-mongodb
 ITEM_PIPELINES = {
-    #'DadosMusicaisScraper.pipelines.CustomMongoDBPipeline',
-    'scrapy_mongodb.MongoDBPipeline': 300,
+    'DadosMusicaisScraper.pipelines.CustomMongoDBPipeline': 300,
+    # 'scrapy_mongodb.MongoDBPipeline': 300,
 }
 
 

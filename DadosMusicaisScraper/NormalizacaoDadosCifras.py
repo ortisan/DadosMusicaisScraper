@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 __author__ = 'marcelo'
 
 import concurrent.futures
@@ -16,17 +17,17 @@ colecao = db[MONGODB_COLLECTION]
 
 def normalizar_dados_cifras(idx, qtd):
     # TODO Talvez tenha que trazer o tom, caso haja diferencas entre os acordes e os acordes especificos do tom.
-    registros = colecao.find({}, {'_id': True, "seq_acordes_brutos": True, "capo": True}).skip(idx).limit(qtd)
+    registros = colecao.find({}, {'_id': True, "seq_acordes": True, "capo": True}).skip(idx).limit(qtd)
 
     for registro in registros:
 
         try:
             id = registro['_id']
 
-            seq_acordes_brutos = registro['seq_acordes_brutos']
+            seq_acordes = registro['seq_acordes']
             capo = registro['capo']
 
-            acordes_unicos, tonicas, modos = obter_unicos_tonicas_baixos_modos(seq_acordes_brutos, capo)
+            acordes_unicos, tonicas, modos = obter_unicos_tonicas_baixos_modos(seq_acordes, capo)
 
             dictUpdate = {"acordes_unicos": acordes_unicos,
                           "tonicas": tonicas,
@@ -43,6 +44,6 @@ def normalizar_dados_cifras(idx, qtd):
 if __name__ == "__main__":
     qtd_registros = colecao.count()
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
         for i in range(0, qtd_registros, 50):
             executor.submit(normalizar_dados_cifras, i, 50)
