@@ -30,7 +30,7 @@ Scrape dos dados
 Exportação dos dados
 --------------------
 
-1. ```mongoexport --db scrapy --collection musicas --csv --fieldFile ./fields.txt --out ./musicas.csv```
+1. ```mongoexport  -q '{ $query: {qtd_exibicoes_youtube: {$gt: 0}}}' -d scrapy -c musicas --csv --fieldFile ./fields.txt --out ./musicas.csv```
 
 OBSERVAÇÕES
 -----------
