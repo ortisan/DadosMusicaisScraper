@@ -26,6 +26,7 @@ Scrape dos dados
 1. No diretório do projeto executar: ```python main.py -s MusicasPorEstiloCifraClubSpider```. Esse Spider, obtém as músicas de acordo com os estilos da url [http://www.cifraclub.com.br/estilos/](http://www.cifraclub.com.br/estilos/)
 2. No diretório do projeto executar: ```python main.py -s MusicasPorArtistaCifraClubSpider```. Obtém todas as músicas dos artistas já separados por estilo (passo 1).
 3. No diretório do projeto executar: ```python main.py -s RatingsYoutubeSpider```. Obtém os ratings das músicas obtidas no passo 1 e 2.
+4. Caso queira os dados de duração e qtd de audições do Lastfm, configure no settings.py as variáveis: LASTFM_API_KEY, LASTFM_API_SECRET, LASTFM_USERNAME e LASTFM_PASSWORD. No diretório do projeto executar: ```python AtualizadorDadosLastFM.py```.
 
 Exportação dos dados
 --------------------
