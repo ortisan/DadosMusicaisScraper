@@ -28,7 +28,7 @@ class MusicasPorArtistaCifraClubSpider(scrapy.Spider):
 
     def parse(self, response):
 
-        registros_mongo = self.colecao.find({}, {'url_cifraclub': 1, 'estilo': 1})
+        registros_mongo = self.colecao.find({}, {'url_cifraclub': 1, 'estilo_cifraclub': 1})
 
         artistas_ja_processados = []
 
@@ -47,7 +47,7 @@ class MusicasPorArtistaCifraClubSpider(scrapy.Spider):
             url_musicas_artista = urlunsplit((scheme, netloc, path, query, fragment))
             request = Request(url_musicas_artista, callback=self.parse_listagem_musicas_artista)
             ## TRANSPORTA DADOS PARA O PROXIMO CALLBACK
-            request.meta['estilo'] = registro_mongo['estilo']
+            request.meta['estilo'] = registro_mongo['estilo_cifraclub']
 
             yield request
 
@@ -104,14 +104,14 @@ class MusicasPorArtistaCifraClubSpider(scrapy.Spider):
 
         yield Musica(_id=_id,
                      dt_insercao=datetime.datetime.today(),
-                     estilo=estilo,
+                     estilo_cifraclub=estilo,
                      nome=nome_musica,
                      artista=artista,
-                     tom=tom,
-                     possui_tabs=possui_tabs,
-                     possui_capo=possui_capo,
-                     capo=capo,
-                     seq_acordes=seq_acordes,
+                     tom_cifraclub=tom,
+                     possui_tabs_cifraclub=possui_tabs,
+                     possui_capo_cifraclub=possui_capo,
+                     capo_cifraclub=capo,
+                     seq_acordes_cifraclub=seq_acordes,
                      qtd_exibicoes_cifraclub=qtd_exibicoes_cifraclub,
                      url_cifraclub=response.url,
                      linhas_html_cifraclub=linhas_html_cifra)

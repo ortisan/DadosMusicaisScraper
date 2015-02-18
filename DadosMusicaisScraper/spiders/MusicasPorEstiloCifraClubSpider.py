@@ -49,14 +49,10 @@ class MusicasPorEstiloCifraClubSpider(scrapy.Spider):
 
                 lista_musicas = self.driver_cifra.find_element_by_css_selector("ol.top.spr1").get_attribute('innerHTML')
 
-                regex = re.compile(r'[^0-9]*')
-
                 for a_musicas in Selector(text=lista_musicas).css('li a'):
                     href_musica = a_musicas.css('::attr(href)')[0].extract()
                     nome_musica = a_musicas.css('strong.top-txt_primary::text')[0].extract()
                     artista = a_musicas.css('strong.top-txt_secondary::text')[0].extract()
-                    qtd_exibicoes_cifraclub_str = a_musicas.css('small::text')[0].extract()
-                    qtd_exibicoes_cifraclub = int(obter_valor_default(regex.sub('', qtd_exibicoes_cifraclub_str), '0'))
 
                     scrapy.log.msg(">> Musica <%s - %s (%s)> sera lida..." % (artista, nome_musica, href_musica),
                                    level=scrapy.log.INFO)
@@ -71,7 +67,6 @@ class MusicasPorEstiloCifraClubSpider(scrapy.Spider):
                     request.meta['estilo'] = nome_estilo
                     request.meta['nome'] = nome_musica
                     request.meta['artista'] = artista
-                    request.meta['qtd_exibicoes_cifraclub'] = qtd_exibicoes_cifraclub
                     yield request
 
             except BaseException as exc:
@@ -83,6 +78,10 @@ class MusicasPorEstiloCifraClubSpider(scrapy.Spider):
 
         scrapy.log.msg(">> Musica <(%s)> lida..." % (response.url),
                        level=scrapy.log.INFO)
+
+        qtd_exibicoes_cifraclub_str = response.css('#v_exibicoes')[0].extract()
+        regex = re.compile(r'[^0-9]*')
+        qtd_exibicoes_cifraclub = int(obter_valor_default(regex.sub('', qtd_exibicoes_cifraclub_str), '0'))
 
         div_cifra = response.css('#cifra_cnt')
 
@@ -114,14 +113,14 @@ class MusicasPorEstiloCifraClubSpider(scrapy.Spider):
 
         yield Musica(_id=_id,
                      dt_insercao=datetime.datetime.today(),
-                     estilo=estilo,
+                     estilo_cifraclub=estilo,
                      nome=nome_musica,
                      artista=artista,
-                     tom=tom,
-                     possui_tabs=possui_tabs,
-                     possui_capo=possui_capo,
-                     capo=capo,
-                     seq_acordes=seq_acordes,
-                     qtd_exibicoes_cifraclub=response.meta['qtd_exibicoes_cifraclub'],
+                     tom_cifraclub=tom,
+                     possui_tabs_cifraclub=possui_tabs,
+                     possui_capo_cifraclub=possui_capo,
+                     capo_cifraclub=capo,
+                     seq_acordes_cifraclub=seq_acordes,
+                     qtd_exibicoes_cifraclub=qtd_exibicoes_cifraclub,
                      url_cifraclub=response.url,
                      linhas_html_cifraclub=linhas_html_cifra)

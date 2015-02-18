@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from scrapy.exceptions import DropItem
 
 __author__ = 'marcelo'
 
@@ -58,23 +57,18 @@ class CustomMongoDBPipeline(MongoDBPipeline):
             else:
                 key[self.config['unique_key']] = item[self.config['unique_key']]
 
-            try:
-                self.collection.update(key, item, upsert=True)
-                log.msg(
-                    'Stored item(s) in MongoDB {0}/{1}'.format(
-                        self.config['database'], self.config['collection']),
-                    level=log.DEBUG,
-                    spider=spider)
-            except BaseException as exc:
-                mensagem = 'Error insert or update item(s) in MongoDB {0}/{1}: {2}'.format(
-                    self.config['database'], self.config['collection'], exc)
+                ################ ATUALIZADO AUTOR: MARCELO ORTIZ ################
+                # ATUALIZEI POIS O DEFAULT SOBRESCREVIA OS CAMPOS JA INSERIDOS
+                # ANTERIORMENTE. LOGO, NAO PRECISO EM TODO SPIDER, RECONFIGURAR
+                # OS VALORES JA INSERIDOS ANTERIORMENTE.
+                #################################################################
 
-                log.msg(mensagem,
-                        level=log.ERROR,
+                item_upsert = {"$set": item}
+                self.collection.update(key, item_upsert, upsert=True)
+
+                log.msg('Stored item(s) in MongoDB {0}/{1}'.format(
+                    self.config['database'], self.config['collection']),
+                        level=log.DEBUG,
                         spider=spider)
 
-                raise DropItem(mensagem)
-
         return item
-
-

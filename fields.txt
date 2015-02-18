@@ -10,4 +10,5 @@ qtd_gostei_youtube
 qtd_nao_gostei_youtube
 dias_desde_publicacao_youtube
 url_cifraclub
+url_busca_youtube
 url_video_youtube

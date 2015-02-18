@@ -32,8 +32,21 @@ if __name__ == '__main__':
     delta = data_atual - dt_publicacao
 
     dias = delta.days
+    from pymongo import MongoClient
 
+    from DadosMusicaisScraper.settings import *
 
+    client = MongoClient(MONGODB_URI)
+    db = client[MONGODB_DATABASE]
+    colecao = db['test']
+
+    colecao.insert({"_id": 1, "x": "y", "a": "b"})
+
+    chave = {"_id": 1}
+
+    item = {"$set": {"z": "y", "a": "c"}}
+
+    colecao.update(chave, item, upsert=True)
 
 
     print(x)

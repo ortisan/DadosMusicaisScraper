@@ -4,6 +4,7 @@ __author__ = 'marcelo'
 import concurrent.futures
 from pymongo import MongoClient
 import scrapy
+
 from scrapy import log
 
 from utils import *
@@ -24,14 +25,14 @@ def normalizar_dados_cifras(idx, qtd):
         try:
             id = registro['_id']
 
-            seq_acordes = registro['seq_acordes']
-            capo = registro['capo']
+            seq_acordes = registro['seq_acordes_cifraclub']
+            capo = registro['capo_cifraclub']
 
             acordes_unicos, tonicas, modos = obter_unicos_tonicas_baixos_modos(seq_acordes, capo)
 
-            dictUpdate = {"acordes_unicos": acordes_unicos,
-                          "tonicas": tonicas,
-                          "modos": modos}
+            dictUpdate = {"acordes_unicos_cifraclub": acordes_unicos,
+                          "tonicas_cifraclub": tonicas,
+                          "modos_cifraclub": modos}
 
             # atualizamos o registro com os dados dos ratings do youtube.
             colecao.update({"_id": id}, {'$set': dictUpdate})
@@ -44,6 +45,8 @@ def normalizar_dados_cifras(idx, qtd):
 if __name__ == "__main__":
     qtd_registros = colecao.count()
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
         for i in range(0, qtd_registros, 50):
             executor.submit(normalizar_dados_cifras, i, 50)
+
+
