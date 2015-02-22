@@ -10,7 +10,7 @@ import scrapy
 from scrapy.http import Request
 from scrapy.selector import Selector
 from selenium import webdriver
-from scrapy import log
+import scrapy.log
 
 from DadosMusicaisScraper.utils import *
 from DadosMusicaisScraper.items import Musica
@@ -31,8 +31,8 @@ class MusicasPorEstiloCifraClubSpider(scrapy.Spider):
                 href_estilo = a_estilo.css('::attr(href)')[0].extract()
                 nome_estilo = a_estilo.css('::text')[0].extract()
 
-                scrapy.log.msg(">> Estilo <%s (%s)> sera processado..." % (nome_estilo, href_estilo),
-                               level=scrapy.log.INFO)
+                log.msg(">> Estilo <%s (%s)> sera processado..." % (nome_estilo, href_estilo),
+                               level=log.INFO)
 
                 self.driver_cifra.get(urljoin(response.url, href_estilo))
 
@@ -54,8 +54,8 @@ class MusicasPorEstiloCifraClubSpider(scrapy.Spider):
                     nome_musica = a_musicas.css('strong.top-txt_primary::text')[0].extract()
                     artista = a_musicas.css('strong.top-txt_secondary::text')[0].extract()
 
-                    scrapy.log.msg(">> Musica <%s - %s (%s)> sera lida..." % (artista, nome_musica, href_musica),
-                                   level=scrapy.log.INFO)
+                    log.msg(">> Musica <%s - %s (%s)> sera lida..." % (artista, nome_musica, href_musica),
+                                   level=log.INFO)
 
                     scheme, netloc, path, query, fragment = urlsplit(response.url)
                     path = href_musica
@@ -70,14 +70,14 @@ class MusicasPorEstiloCifraClubSpider(scrapy.Spider):
                     yield request
 
             except BaseException as exc:
-                scrapy.log.msg("Erro ao processar o estilo <%s>. Detalhes: %s..." % (nome_estilo, exc),
-                               loglevel=scrapy.log.ERROR, logstdout=None)
+                log.msg("Erro ao processar o estilo <%s>. Detalhes: %s..." % (nome_estilo, exc),
+                        loglevel=log.ERROR, logstdout=None)
 
 
     def parse_musicas(self, response):
 
-        scrapy.log.msg(">> Musica <(%s)> lida..." % (response.url),
-                       level=scrapy.log.INFO)
+        log.msg(">> Musica <(%s)> lida..." % (response.url),
+                       level=log.INFO)
 
         qtd_exibicoes_cifraclub_str = response.css('#v_exibicoes')[0].extract()
         regex = re.compile(r'[^0-9]*')

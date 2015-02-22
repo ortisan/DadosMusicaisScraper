@@ -18,8 +18,9 @@ def atualizar_qtd_acordes():
 
     for registro in registros:
 
+        id = registro['_id']
+
         try:
-            id = registro['_id']
             seq_acordes = registro['seq_acordes_cifraclub']
             set_acordes = set()
             set_acordes_add = set_acordes.add
@@ -30,7 +31,7 @@ def atualizar_qtd_acordes():
             colecao.update({"_id": id}, {'$set': dictUpdate})
 
         except BaseException as exc:
-            scrapy.log.msg("Erro ao processar o registro <%s>. Detalhes: %s..." % ((str(registro)), exc),
+            scrapy.log.msg("Erro ao processar o registro <%s>. Detalhes: %s..." % (id, exc),
                            loglevel=scrapy.log.ERROR, logstdout=None)
 
 

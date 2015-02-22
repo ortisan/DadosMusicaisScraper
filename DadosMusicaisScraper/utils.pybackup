@@ -3,6 +3,91 @@ __author__ = 'marcelo'
 
 import re
 
+from music21 import harmony
+from music21 import interval
+
+
+
+# >>> symbols = ['', 'm', '+', 'dim', '7',
+# ...            'M7', 'm7', 'dim7', '7+', 'm7b5', #half-diminished
+# ...            'mM7', '6', 'm6', '9', 'Maj9', 'm9',
+# ...            '11', 'Maj11', 'm11', '13',
+# ...            'Maj13', 'm13', 'sus2', 'sus4',
+# ...            'N6', 'It+6', 'Fr+6', 'Gr+6', 'pedal',
+# ...            'power', 'tristan', '/E', 'm7/E-', 'add2',
+# ...            '7omit3',]
+# >>> for s in symbols:
+# ...     chordSymbolName = 'C' + s
+# ...     h = harmony.ChordSymbol(chordSymbolName)
+# ...     pitchNames = [str(p) for p in h.pitches]
+# ...     print("%-10s%s" % (chordSymbolName, "[" + (', '.join(pitchNames)) + "]"))
+# C         [C3, E3, G3]
+# Cm        [C3, E-3, G3]
+# C+        [C3, E3, G#3]
+# Cdim      [C3, E-3, G-3]
+# C7        [C3, E3, G3, B-3]
+# CM7       [C3, E3, G3, B3]
+# Cm7       [C3, E-3, G3, B-3]
+# Cdim7     [C3, E-3, G-3, B--3]
+# C7+       [C3, E3, G#3, B-3]
+# Cm7b5     [C3, E-3, G-3, B-3]
+# CmM7      [C3, E-3, G3, B3]
+# C6        [C3, E3, G3, A3]
+# Cm6       [C3, E-3, G3, A3]
+# C9        [C3, E3, G3, B-3, D4]
+# CMaj9     [C3, E3, G3, B3, D4]
+# Cm9       [C3, E-3, G3, B-3, D4]
+# C11       [C2, E2, G2, B-2, D3, F3]
+# CMaj11    [C2, E2, G2, B2, D3, F3]
+# Cm11      [C2, E-2, G2, B-2, D3, F3]
+# C13       [C2, E2, G2, B-2, D3, F3, A3]
+# CMaj13    [C2, E2, G2, B2, D3, F3, A3]
+# Cm13      [C2, E-2, G2, B-2, D3, F3, A3]
+# Csus2     [C3, D3, G3]
+# Csus4     [C3, F3, G3]
+# CN6       [C3, D-3, E3, G-3]
+# CIt+6     [C3, F#3, A-3]
+# CFr+6     [C3, D3, F#3, A-3]
+# CGr+6     [C3, E-3, F#3, A-3]
+# Cpedal    [C3]
+# Cpower    [C3, G3]
+# Ctristan  [C3, D#3, F#3, A#3]
+# C/E       [E3, G3, C4]
+# Cm7/E-    [E-3, G3, B-3, C4]
+# Cadd2     [C3, D3, E3, G3]
+# C7omit3   [C3, G3, B-3]
+
+
+"A a G, com #, 4, M7 e 7 SEM SER 7M"
+regex_nota = u'([A-G]#*4*(M7)*(7(?!M))*)'
+"b"
+regex_bemol = u'(?P<bemol>b+)*'
+"m"
+regex_menor = u'(m)*'
+"7M ou 7+ vai ser traduzido para M7"
+regex_maior7 = u'(?P<maior7>7M|7\+)*'
+"7m ou 7+ vai ser traduzido para M7"
+regex_menor7 = u'(?P<menor7>7m|m7)*'
+regex_menor7 = u'(?P<quintas>7m|m7)*'
+regex_dom7 = u'(7)*'
+regex_dim = u'(?P<dim>°|º|7\-)*'
+# NAO USAREMOS OS ACORDES COM AS VARIACOES (9), (9/13), (13) etc
+# TODO VERIFICAR SE O 5 NAO SIGNIFICA UM POWER CHORD
+regex_nao_usados = u'(?P<nao_usados>(5\-|5\+|5|6)*b*(\/.*)*(\/[0-9])*(\(.+\))*)'
+
+import logging
+
+LOG_FILENAME = 'utils.log'
+logging.basicConfig(filename=LOG_FILENAME,
+                    level=logging.ERROR)
+
+
+def eh_vazio(valor):
+    retorno = False
+    if valor is None or valor == '':
+        retorno = True
+    return retorno
+
 
 def obter_valor_default(valor, valor_default):
     """
@@ -12,289 +97,229 @@ def obter_valor_default(valor, valor_default):
     :return: Valor caso seja != None e != '', senão valor_default.
     """
     retorno = valor
-    if valor is None or valor == '':
+    if eh_vazio(valor):
         retorno = valor_default
     return retorno
 
 
-notas = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#']
-notas_bemois = ['A', 'Bb', 'B', 'C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab']
+dict_troca_notacao = {'bemol': '-',
+                      'aug': 'sus4',
+                      'maior7': 'M7',
+                      'menor7': 'm7',
+                      'dim': 'dim',
+                      'nao_usados': ''}
 
 
-def obter_tonica_modo_inversao(acorde):
-    """
-    Obtem a tônica, o modo e a inversão (caso possua) do acorde.
-    :param acorde: String representando o acorde.
-    :return: string com a tonica, o modo (M-Maior, m-Menor, +-Aumentado, --Diminuto e a inversão.
-    """
-    # acorde = acorde.replace(u'maj', '')
-    # acorde = acorde.replace(u'min', 'm')
-    # acorde = acorde.replace(u'°', '-')
-    # acorde = acorde.replace(u'º', '-')
-    # acorde = acorde.replace(u'aum', '+')
-    # acorde = acorde.replace(u'dim', '-')
+def trocar_notacao_acordes(acorde):
+    regex_compilado = re.compile(regex_nota +
+                                 regex_bemol +
+                                 regex_menor +
+                                 regex_maior7 +
+                                 regex_menor7 +
+                                 regex_dom7 +
+                                 regex_dim +
+                                 regex_nao_usados)
 
-    regex_tonica = '([A-G](#|b){0,1})'
-    regex_maior = '(7M|maj){0,1}'
-    regex_menor = '(m|min){0,1}'
-    regex_dominante = '(7|aum){0,1}'
-    regex_diminuto = '(dim|º|°)'
-    regex_inversao = '\/{0,1}([A-G]#{0,1}|b{0,1})'
+    m = regex_compilado.match(acorde)
 
-
-    m = re.search(regex_tonica + regex_maior + regex_menor + regex_inversao, acorde)
+    dict_group = m.groupdict()
+    if dict_group is not None:
+        for chave, valor in dict_group.iteritems():
+            if not eh_vazio(valor):
+                novo_valor = dict_troca_notacao.get(chave)
+                acorde = acorde.replace(valor, novo_valor)
+    return acorde
 
 
-
-    # regex_notas_acrescentadas = '(\d){0,2}'
-    # regex_modo = '(m|\+|-){0,1}'
-    # regex_inversao = '\/{0,1}([A-G]#{0,1}|b{0,1})'
-    # m = re.search(regex_tonica + regex_notas_acrescentadas + regex_modo + regex_inversao, acorde)
-    tonica = obter_valor_default(m.group(1), '')
-    modo = obter_valor_default(m.group(4), 'M')
-    inversao = obter_valor_default(m.group(5), '')
-    return tonica, modo, inversao
-
-
-def obter_nota_normalizada_por_capo(p_nota, capo):
-    idx_letra = 1
-    notas_local = notas
-    if p_nota.find("#") == 1:
-        idx_letra = 2
-    if p_nota.find("b") == 1:
-        idx_letra = 2
-        notas_local = notas_bemois
-    try:
-        idx = notas.index(p_nota[0: idx_letra])
-        # Busco as notas
-        nova_nota = notas_local[(capo + idx) % 12]
-        nota = nova_nota + p_nota[idx_letra:]
-    except BaseException as exc:
-        print exc
-
-    return nota
-
-
-def obter_unicos_tonicas_modos_inversoes(acordes, capo=0):
-    """
-    Dada uma lista de acordes, devolvemos os acordes unicos, as tonicas de cada acorde, os modos de cada acorde e as inversoes de cada acorde.
-    :param acordes: Lista com os acordes.
-    :param capo: casa em que o capotraste está.
-    :return: listas contendo os acordes únicos, as tônicas, os modos e as inversões.
-    """
+def obter_novos_unicos_tonicas_baixos_modos(acordes, capo=0):
+    novos_acordes = []
     tonicas = []
+    baixos = []
     modos = []
-    inversoes = []
-    acordes_unicos = []
+    unicos = []
 
     for acorde in acordes:
-        tonica, modo, inversao = obter_tonica_modo_inversao(acorde)
-        if capo > 0:
-            novo_acorde = obter_nota_normalizada_por_capo(tonica, capo)
-            novo_acorde = novo_acorde + modo if modo
-            possui_inversao = len(inversao) > 0
-            if possui_inversao:
-                nova_inversao = obter_nota_normalizada_por_capo(tonica, capo)
-                novo_acorde = novo_acorde + '/' + nova_inversao
+        try:
+            logging.info(u"Alterando o acorde <%s>, caso nao esteja previsto..." % acorde)
+            novo_acorde = trocar_notacao_acordes(acorde)
+            logging.info(u"Acorde alterado. De <%s> para <%s>..." % (acorde, novo_acorde))
             acorde = novo_acorde
+            logging.info(u"Traduzindo acorde <%s> no music21..." % acorde)
 
-        if not acorde in acordes_unicos:
-            acordes_unicos.append(acorde)
-            tonicas.append(tonica)
-            modos.append(modo)
-            inversoes.append(inversao)
+            obj_acorde = harmony.ChordSymbol(acorde)
 
-    return acordes_unicos, tonicas, modos, inversoes
+            if capo > 0:
+                try:
+                    # novas_notas = []
+                    # for nota_str in notas:
+                    # nota_obj = Note(nota_str)
+                    # nova_nota_int = int(nota_obj) + capo
+                    # nota_obj.from_int(nova_nota_int)
+                    # novas_notas.append(nota_obj.name)
+                    # notas = novas_notas
+                    # novo_acorde = harmony.ChordSymbol(acorde)
+                    aInterval = interval.Interval(capo)
+                    obj_acorde.transpose(aInterval, inPlace=True)
+                except BaseException as exc:
+                    logging.error(u"Erro ao transpor a nota no music21. Detalhes: %s..." % exc)
+                    raise exc
+
+            # acorde_traduzido = chords.determine(notas, True, True)[0]
+            acorde_traduzido, modo = harmony.chordSymbolFigureFromChord(obj_acorde, True)
+
+            if not acorde_traduzido in unicos:
+                unicos.append(acorde_traduzido)
+                modos.append(modo)
+                tonicas.append(obj_acorde.root().name)
+                # baixos.append(obj_acorde.bass().name)
+        except BaseException as exc:
+            logging.error(u"Erro ao traduzir o acorde: <%s>. Detalhes: %s" % (acorde, exc))
+            raise exc
+
+            # if capo > 0:
+    return novos_acordes, unicos, tonicas, modos
 
 
 if __name__ == '__main__':
-    # TODO CRIAR TESTE UNITARIO
+    # # TODO CRIAR TESTE UNITARIO
+    #
+    # regex_nota = u'([A-G]#*4*(M7)*(7(?!M))*)'
+    # regex_bemol = u'(?P<bemol>b+)*'
+    #
+    # #TODO D6 EH TRADUZIDO ERRADO
+    # acordes = ['Am6',u'G(add9)', u'D6', u'Em9', "Em9",
+    # "A7(11+)",
+    # "Am(11+)",
+    # "Am7",
+    # "Am6",
+    # "Em6",
+    # "A7(11+)",
+    # "Am(11+)",
+    # "D7/9b",
+    # "D7/9",
+    # "D5",
+    # "C5",
+    # "Bm",
+    # "Am",
+    # "C5",
+    # "Bm"]
+    #
+    # novos_acordes, unicos, tonicas, modos = obter_novos_unicos_tonicas_baixos_modos(acordes, 0)
+    # assert tonicas[0] == 'G'
+    # assert tonicas[1] == 'D'
+    # assert tonicas[2] == 'E'
+    # assert tonicas[3] == 'A'
+    # assert tonicas[4] == 'A'
+    # assert tonicas[5] == 'A'
+    # assert tonicas[6] == 'A'
+    # assert tonicas[7] == 'E'
+    #
+    #
+    # # regex_nota = u'([A-G]#*4*(M7)*(m7)*(7(?:!M))*)'
+    # # m = re.match(regex_nota, "A7m")
+    # # m.group(0)
+    # # harmony.ChordSymbol('Am7')
+    # #
+    # # novo_acorde = harmony.ChordSymbol('A7m')
+    # # [str(p) for p in novo_acorde.pitches]
+    # # novo_acorde = harmony.ChordSymbol('Asus')
+    # # [str(p) for p in novo_acorde.pitches]
+    # # novo_acorde = harmony.ChordSymbol('Asus4')
+    # # [str(p) for p in novo_acorde.pitches]
+    # # novo_acorde = harmony.ChordSymbol('AM7')
+    # # [str(p) for p in novo_acorde.pitches]
+    # #
+    # # novo_acorde = harmony.ChordSymbol('A-m')
+    # # [str(p) for p in novo_acorde.pitches]
+    # #
+    # # aInterval = interval.Interval(2)
+    # # b = novo_acorde.transpose(aInterval, inPlace=True)
+    # #
+    # # print b
+    # #
+    # # novo_acorde = harmony.ChordSymbol('C#7')
+    # # [str(p) for p in novo_acorde.pitches]
+    # #
+    # # novo_acorde = harmony.ChordSymbol('AmM7')
+    # # [str(p) for p in novo_acorde.pitches]
+    # #
+    # # novo_acorde = harmony.ChordSymbol('A6')
+    # # [str(p) for p in novo_acorde.pitches]
+    # #
+    # # novo_acorde = harmony.ChordSymbol('B/A')
+    # # [str(p) for p in novo_acorde.pitches]
+    # #
+    # # novo_acorde = trocar_notacao_acordes(u'D7M')
+    # #
+    # # novo_acorde = trocar_notacao_acordes(u'D5(6)')
+    # #
+    # # novo_acorde = trocar_notacao_acordes(u'A°')
+    # #
+    # # novo_acorde = trocar_notacao_acordes(u'Aº')
+    # #
+    # # novo_acorde = trocar_notacao_acordes(u'D5(6/9)')
+    # #
+    # # novo_acorde = trocar_notacao_acordes(u'G#7(#5)')
+    # #
+    # # novo_acorde = trocar_notacao_acordes(u'Em7(9)')
+    # #
+    # # novo_acorde = trocar_notacao_acordes(u'B5b')
+    # #
+    # # novo_acorde = trocar_notacao_acordes(u'B5b/6/9')
+    # #
+    # # novo_acorde = trocar_notacao_acordes(u'G#m7(b13)')
+    # #
+    # # # novo_acorde = trocar_notacao_acordes(u'D4/F#')
+    # # # notas = chords.from_shorthand(novo_acorde)
+    # # # assert len(notas) > 0
+    # #
+    # # novo_acorde = trocar_notacao_acordes(u'Gsus4')
+    # #
+    # # novo_acorde = trocar_notacao_acordes(u'C#m5+/7')
 
-    tonica, modo, inversao = obter_tonica_modo_inversao('G')
-    assert (tonica == 'G')
 
-    tonica, modo, inversao = obter_tonica_modo_inversao('Gm')
-    assert (tonica == 'G' and modo == 'm')
+    notas = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#']
+    idx_inicio_capo = [7, 0, 5, 10, 2, 7]
 
-    tonica, modo, inversao = obter_tonica_modo_inversao('F#')
-    assert (tonica == 'F#')
+    acordes_cache = {}
 
-    tonica, modo, inversao = obter_tonica_modo_inversao('Ab')
-    assert (tonica == 'Ab')
+    def acorde_music_21(desenho_acorde):
+        acorde = acordes_cache.get(desenho_acorde)
 
-    tonica, modo, inversao = obter_tonica_modo_inversao(u'F°')
-    assert (tonica == 'F' and modo == '-' and inversao == '')
+        if acorde != None:
+            return acorde
 
-    tonica, modo, inversao = obter_tonica_modo_inversao('E/G#')
-    assert (tonica == 'E' and modo == 'M' and inversao == 'G#')
+        lista_notas = []
+        acorde_violao = u'X 0 1 0 1 X'.split()
+        for i in range(0, 6):
+            nota_str = acorde_violao[i]
+            if nota_str != "X":
+                nota = int(nota_str)
+                inicio_capo = idx_inicio_capo[i]
+                nota_traduzida = notas[(inicio_capo + nota) % 12]
+                lista_notas.append(nota_traduzida)
 
-    tonica, modo, inversao = obter_tonica_modo_inversao('G4')
-    assert (tonica == 'G' and modo == 'M' and inversao == '')
+        from music21 import chord
 
-    tonica, modo, inversao = obter_tonica_modo_inversao('F7M')
-    assert (tonica == 'F' and modo == 'M' and inversao == '')
+        acorde = chord.Chord(lista_notas)
+        acordes_cache[desenho_acorde] = acorde
+        return acorde
 
-    tonica, modo, inversao = obter_tonica_modo_inversao('C#7+')
-    assert (tonica == 'C#' and modo == '+' and inversao == '')
+    import urllib
+    import urllib2
+    import json
 
-    tonica, modo, inversao = obter_tonica_modo_inversao(u'Cº')
-    assert (tonica == 'C' and modo == '-' and inversao == '')
 
-    tonica, modo, inversao = obter_tonica_modo_inversao('G#7(#5)')
-    assert (tonica == 'G#' and modo == 'M' and inversao == '')
+    url = 'http://www.cifraclub.com.br/ajax/dicionario.php'
+    form_data = {'acorde': "Am(11+)", "capo": 0}
+    params = urllib.urlencode(form_data)
+    response = urllib2.urlopen(url, params)
+    json_data = response.read()
+    data = json.loads(json_data)
 
-    tonica, modo, inversao = obter_tonica_modo_inversao('E7+')
-    assert (tonica == 'E' and modo == '+' and inversao == '')
+    c = chord.Chord(['A#', 'B'])
 
-    tonica, modo, inversao = obter_tonica_modo_inversao('Amaj7')
-    assert (tonica == 'A' and modo == 'M' and inversao == '')
-
-    tonica, modo, inversao = obter_tonica_modo_inversao('Fmin+11')
-    assert (tonica == 'F' and modo == 'm' and inversao == '')
-
-    tonica, modo, inversao = obter_tonica_modo_inversao('A7+')
-    assert (tonica == 'A' and modo == '+' and inversao == '')
-
-    tonica, modo, inversao = obter_tonica_modo_inversao('Caum(C5+)')
-    assert (tonica == 'C' and modo == '+' and inversao == '')
-
-    tonica, modo, inversao = obter_tonica_modo_inversao('A/F#')
-    assert (tonica == 'A' and modo == 'M' and inversao == 'F#')
-
-    tonica, modo, inversao = obter_tonica_modo_inversao('G/13')
-    # TODO VERIFICAR ESSA REGRA DE INVERSAO
-    assert (tonica == 'G' and modo == 'M' and inversao == '')
-
-    tonica, modo, inversao = obter_tonica_modo_inversao('G7/D')
-    # TODO VERIFICAR ESSA REGRA DE INVERSAO
-    assert (tonica == 'G' and modo == 'M' and inversao == 'D')
-
-    acordes = ['G7/D', 'Am', 'C7+', u'D#º', 'Dm7', 'G11', 'G7', 'C7+', 'G7/5+', 'Em7', u'D#º', 'Dm7', 'Dm4/7', 'C#7/5-',
-               'C7+', 'G7/13', 'C7+', u'D#º', 'Dm7', 'G11', 'G7', 'Gm7', 'C7/13', 'F7+', 'G#7/9', 'Em7', 'A7/9-', 'D7',
-               'G7/9-', 'C7+', 'G7/13', 'C7+', u'D#º', 'Dm7', 'G11', 'G7', 'C7+', 'G7/5+', 'Em7', u'D#º', 'Dm7',
-               'Dm4/7', 'C#7/5-', 'C7+', 'G7/13', 'C7+', u'D#º', 'Dm7', 'G11', 'G7', 'Gm7', 'C7/13', 'F7+', 'G#7/9',
-               'Em7', 'A7/9-', 'D7', 'G7/9-', 'C7+']
-
-    acordes_unicos, tonicas, modos, inversoes = obter_unicos_tonicas_modos_inversoes(acordes)
-
-    assert (len(acordes_unicos) < len(acordes))
-
-    acordes = [
-        "C",
-        "D",
-        "Em",
-        "Em/B",
-        "C",
-        "D",
-        "Em",
-        "D9",
-        "Em",
-        "Bm",
-        "Em",
-        "Bm",
-        "Em",
-        "Bm",
-        "Am",
-        "D9",
-        "D9",
-        "Em",
-        "Bm",
-        "Em",
-        "Bm",
-        "Em",
-        "Bm",
-        "Am",
-        "D9",
-        "C",
-        "D",
-        "Em",
-        "Em/B",
-        "C",
-        "D",
-        "Em",
-        "D9",
-        "C",
-        "D",
-        "Em",
-        "Em/B",
-        "C",
-        "D",
-        "Em",
-        "D9",
-        "Em",
-        "Bm",
-        "Em",
-        "Bm",
-        "Em",
-        "Bm",
-        "Am",
-        "D9",
-        "D9",
-        "Em",
-        "Bm",
-        "Em",
-        "Bm",
-        "Em",
-        "Bm",
-        "Am",
-        "D9",
-        "C",
-        "D",
-        "Em",
-        "Em/B",
-        "C",
-        "D",
-        "Em",
-        "D9",
-        "Em",
-        "D",
-        "C",
-        "D",
-        "G",
-        "A9",
-        "G",
-        "A9",
-        "G",
-        "A9",
-        "G",
-        "A9",
-        "Em",
-        "Bm",
-        "Em",
-        "Bm",
-        "Em",
-        "Bm",
-        "Am",
-        "D9",
-        "C",
-        "D",
-        "Em",
-        "Em/B",
-        "C",
-        "D",
-        "Em",
-        "C",
-        "D",
-        "Em",
-        "Em/B",
-        "C",
-        "D",
-        "Em",
-        "Em/B",
-        "C",
-        "D",
-        "Em",
-        "Em/B",
-        "C",
-        "D",
-        "Em",
-        "D9",
-        "Em"
-    ]
-
-    acordes_unicos, tonicas, modos, inversoes = obter_unicos_tonicas_modos_inversoes(acordes, 5)
-
-    assert (len(acordes_unicos) < len(acordes))
+    print data
 
 
 

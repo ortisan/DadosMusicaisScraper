@@ -59,4 +59,5 @@ target/
 
 #Gerais
 *.csv
+*.json
 

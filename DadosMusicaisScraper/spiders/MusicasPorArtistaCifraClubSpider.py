@@ -7,7 +7,7 @@ import datetime
 
 import scrapy
 from scrapy.http import Request
-from scrapy import log
+import scrapy.log
 from pymongo import MongoClient
 
 from DadosMusicaisScraper.utils import *
@@ -70,8 +70,8 @@ class MusicasPorArtistaCifraClubSpider(scrapy.Spider):
 
     def parse_musicas(self, response):
 
-        scrapy.log.msg(">> Musica <(%s)> lida..." % (response.url),
-                       level=scrapy.log.INFO)
+        log.msg(">> Musica <(%s)> lida..." % (response.url),
+                       level=log.INFO)
 
         nome_musica = response.css('#ai_musica::text')[0].extract()
         artista = response.css('#ai_artista a::text')[0].extract()
