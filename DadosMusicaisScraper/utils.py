@@ -15,9 +15,9 @@ LOG_FILENAME = 'utils.log'
 logging.basicConfig(filename=LOG_FILENAME,
                     level=logging.ERROR)
 
-notas_estala_sus = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#']
+notas_escala_sus = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#']
 notas_escala_bemol = ['A', 'B-', 'B', 'C', 'D-', 'D', 'E-', 'E', 'F', 'G-', 'G', 'A-']
-idx_inicio_capo = [7, 0, 5, 10, 2, 7]
+idx_inicio_capo = [7, 12, 17, 22, 26, 31]
 acordes_cache = {}
 desenhos_acordes_cache = {}
 idx_notas_acordes_cache = {}
@@ -53,7 +53,7 @@ def obter_dados_acorde(acorde_str, capo):
 
     match_bemol = re.match("^([A-G]b)", acorde_str)
 
-    lista_notas_escala = notas_estala_sus
+    lista_notas_escala = notas_escala_sus
 
     if match_bemol != None:
         lista_notas_escala = notas_escala_bemol
@@ -104,35 +104,80 @@ def obter_dados_acorde(acorde_str, capo):
     return acorde_com_capo
 
 
-def obter_desenho_lista_idx_notas(acorde_str):
-    # desenho_acorde_str = obter_desenho_cifraclub(acorde_str)
-    if acorde_str in desenhos_acordes_cache:
-        desenho_acorde_str = desenhos_acordes_cache[acorde_str]
-        idx_lista_notas_acorde = idx_notas_acordes_cache[acorde_str]
-        return desenho_acorde_str, idx_lista_notas_acorde, True, 'Sucesso - Cache'
+
+
+def transpor_acorde(obj_acorde, capo):
+    foi_sucesso = obj_acorde['foi_sucesso']
+    if foi_sucesso:
+        desenho_acorde = obj_acorde['desenho_acorde']
+        lista_idx_notas, lista_oitavas = obter_lista_idx_oitava_notas(desenho_acorde)
+        nova_lista_idx_notas = [(idx_nota + capo) % 12 for idx_nota in lista_idx_notas]
+
+        lista_notas_escala = notas_escala_sus
+        nome_acorde = obj_acorde['_id']
+        match_bemol = re.match("^([A-G]b)", nome_acorde)
+
+        if match_bemol != None:
+            lista_notas_escala = notas_escala_bemol
+
+        novas_notas = []
+        for i in range(0, len(lista_idx_notas)):
+            idx_nota = lista_idx_notas[i]
+            oitava = lista_oitavas[i]
+            novas_notas.append(lista_notas_escala[idx_nota] + str(oitava))
+
+        acorde_21 = chord.Chord(novas_notas)
+        return nova_lista_idx_notas, novas_notas, acorde_21
     else:
-        try:
+        return [], [], None
+
+
+    def obter_desenho_lista_idx_notas(acorde_str):
+        # desenho_acorde_str = obter_desenho_cifraclub(acorde_str)
+        if acorde_str in desenhos_acordes_cache:
+            desenho_acorde_str = desenhos_acordes_cache[acorde_str]
+            idx_lista_notas_acorde = idx_notas_acordes_cache[acorde_str]
+            return desenho_acorde_str, idx_lista_notas_acorde, True, 'Sucesso - Cache'
+        else:
             try:
-                desenho_acorde_str = obter_desenho_echord(acorde_str)
+                try:
+                    desenho_acorde_str = obter_desenho_echord(acorde_str)
+                except BaseException as exc:
+                    desenho_acorde_str = obter_desenho_cifraclub(acorde_str)
+
+                desenho_acorde = desenho_acorde_str.split()
+                lista_idx_notas = []
+                lista_notas = []
+                for i in range(0, 6):
+                    nota_str = desenho_acorde[i]
+                    if nota_str != "X":
+                        nota = int(nota_str)
+                        inicio_capo = idx_inicio_capo[i]
+                        idx_nota = (inicio_capo + nota) % 12
+                        nota_traduzida = notas_escala_sus[idx_nota]
+                        lista_notas.append(nota_traduzida)
+                        lista_idx_notas.append(idx_nota)
+                return desenho_acorde_str, lista_idx_notas, lista_notas, True, 'Sucesso'
+
             except BaseException as exc:
-                desenho_acorde_str = obter_desenho_cifraclub(acorde_str)
+                # TODO VERIFICAR O TIPO DE ERRO
+                return '', [], [], False, "Erro: %s" % exc
 
-            desenho_acorde = desenho_acorde_str.split()
-            lista_idx_notas = []
-            for i in range(0, 6):
-                nota_str = desenho_acorde[i]
-                if nota_str != "X":
-                    nota = int(nota_str)
-                    inicio_capo = idx_inicio_capo[i]
-                    idx_nota = (inicio_capo + nota) % 12
-                    # nota_traduzida = notas[idx_nota]
-                    # lista_notas.append(nota_traduzida)
-                    lista_idx_notas.append(idx_nota)
-            return desenho_acorde_str, lista_idx_notas, True, 'Sucesso'
 
-        except BaseException as exc:
-            # TODO VERIFICAR O TIPO DE ERRO
-            return '', [], False, "Erro: %s" % exc
+def obter_lista_idx_oitava_notas(desenho_acorde):
+    desenho_acorde = desenho_acorde.split()
+    lista_idx_notas = []
+    lista_oitavas = []
+    for i in range(0, 6):
+        nota_str = desenho_acorde[i]
+        if nota_str != "X":
+            nota = int(nota_str)
+            inicio_capo = idx_inicio_capo[i]
+            idx_nota = (inicio_capo + nota) % 12
+            oitava = int((inicio_capo + nota) / 12)
+            lista_idx_notas.append(idx_nota)
+            lista_oitavas.append(oitava)
+    return lista_idx_notas, lista_oitavas
 
 
 def obter_desenho_cifraclub(acorde):
@@ -168,15 +213,15 @@ def obter_desenho_echord(acorde):
 # acorde = substituir_caracteres_acorde(acorde)
 #
 # form_data = {'searchFor': acorde}
-#     params = urllib.urlencode(form_data)
-#     response = urllib2.urlopen('http://chord-c.com/guitar-chord-search/', params)
-#     html_data = response.read()
-#     # sinonimo = data['sinonimo']
-#     from bs4 import BeautifulSoup
-#     soup = BeautifulSoup(html_data)
-#     div = soup.find_all("div", class_="diaM")[0]
-#     soup.find(class="diaM")
-#     return ''
+# params = urllib.urlencode(form_data)
+# response = urllib2.urlopen('http://chord-c.com/guitar-chord-search/', params)
+# html_data = response.read()
+# # sinonimo = data['sinonimo']
+# from bs4 import BeautifulSoup
+# soup = BeautifulSoup(html_data)
+# div = soup.find_all("div", class_="diaM")[0]
+# soup.find(class="diaM")
+# return ''
 
 
 def substituir_caracteres_acorde(acorde):
@@ -239,7 +284,7 @@ if __name__ == '__main__':
     #
     # print(unicos)
 
-    #obter_desenho_chord_c('Abm');
+    # obter_desenho_chord_c('Abm');
 
 
 

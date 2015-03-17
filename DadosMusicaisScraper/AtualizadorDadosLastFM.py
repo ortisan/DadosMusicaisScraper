@@ -14,11 +14,12 @@ colecao = db[MONGODB_COLLECTION]
 
 qtd_nao_processados = 0
 
-def obter_dados_last_fm(idx, qtd):
+
+def obter_dados_last_fm(registros):
     # registros = colecao.find({'duracao_lastfm': {'$exists': 0}}, {'_id': True, "artista": True, "nome": True}).skip(
     # idx).limit(qtd)
-    registros = colecao.find({'duracao_lastfm': {'$exists': 0}}, {'_id': True, "artista": True, "nome": True})
-    # registros = colecao.find({'duracao_lastfm': -1}, {'_id': True, "artista": True, "nome": True})
+    # registros = colecao.find({'duracao_lastfm': {'$exists': 0}}, {'_id': True, "artista": True, "nome": True})
+
     for registro in registros:
         duracao = -1
         qtd_audicoes = -1
@@ -46,7 +47,7 @@ def obter_dados_last_fm(idx, qtd):
 
 if __name__ == "__main__":
     # Busca os registros que nao possuem dados do lastfm
-    # qtd_registros = colecao.find({'duracao_lastfm': {'$exists': 0}}, {'_id': True}).count()
+    qtd_registros = colecao.find({'duracao_lastfm': -1}, {'_id': True, "artista": True, "nome": True}).count()
 
     # with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
     # for i in range(0, qtd_registros, 50):
@@ -57,6 +58,19 @@ if __name__ == "__main__":
     # track = network.get_track(artista, nome)
     # duracao = track.get_duration()
     # qtd_audicao_fm = track.get_playcount()
+    registros = colecao.find({'duracao_lastfm': -1}, {'_id': True, "artista": True, "nome": True})
+    import concurrent.futures
 
-    obter_dados_last_fm(0, 0)
+    qtd_registros_por_thread = 50
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        for i in range(0, qtd_registros, qtd_registros_por_thread):
+            idx = 0
+            lista_processar = []
+            for registro in registros:
+                lista_processar.append(registro)
+                idx = idx + 1
+                if idx >= qtd_registros_por_thread:
+                    break
+
+            executor.submit(obter_dados_last_fm, lista_processar)
 

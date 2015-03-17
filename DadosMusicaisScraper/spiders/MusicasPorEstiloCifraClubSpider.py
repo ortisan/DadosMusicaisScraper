@@ -10,13 +10,14 @@ import scrapy
 from scrapy.http import Request
 from scrapy.selector import Selector
 from selenium import webdriver
-import scrapy.log
+from scrapy import log
 
 from DadosMusicaisScraper.utils import *
 from DadosMusicaisScraper.items import Musica
 
 
 class MusicasPorEstiloCifraClubSpider(scrapy.Spider):
+
     name = 'MusicasPorEstiloCifraClubSpider'
     allwed_domains = ['cifraclub.com.br']
     start_urls = ['http://www.cifraclub.com.br/estilos/']
@@ -32,7 +33,7 @@ class MusicasPorEstiloCifraClubSpider(scrapy.Spider):
                 nome_estilo = a_estilo.css('::text')[0].extract()
 
                 log.msg(">> Estilo <%s (%s)> sera processado..." % (nome_estilo, href_estilo),
-                               level=log.INFO)
+                        level=log.INFO)
 
                 self.driver_cifra.get(urljoin(response.url, href_estilo))
 
@@ -55,7 +56,7 @@ class MusicasPorEstiloCifraClubSpider(scrapy.Spider):
                     artista = a_musicas.css('strong.top-txt_secondary::text')[0].extract()
 
                     log.msg(">> Musica <%s - %s (%s)> sera lida..." % (artista, nome_musica, href_musica),
-                                   level=log.INFO)
+                            level=log.INFO)
 
                     scheme, netloc, path, query, fragment = urlsplit(response.url)
                     path = href_musica
@@ -77,7 +78,7 @@ class MusicasPorEstiloCifraClubSpider(scrapy.Spider):
     def parse_musicas(self, response):
 
         log.msg(">> Musica <(%s)> lida..." % (response.url),
-                       level=log.INFO)
+                level=log.INFO)
 
         qtd_exibicoes_cifraclub_str = response.css('#v_exibicoes')[0].extract()
         regex = re.compile(r'[^0-9]*')

@@ -20,24 +20,20 @@ logging.basicConfig(filename=LOG_FILENAME,
 # TODO Talvez tenha que trazer o tom, caso haja diferencas entre os acordes e os acordes especificos do tom.
 
 
-def traduzir_acordes(idx, qtd):
-    registros = colecao_dicionario.find({"$or": [{"foi_sucesso": {"$exists": 0}}, {"foi_sucesso": False}]}).skip(
-        idx).limit(qtd)
-    # registros = colecao_dicionario.find({"desenho_acorde": {"$exists": 0}}).skip(idx).limit(qtd)
-
+def traduzir_acordes(registros):
     for registro in registros:
         id = registro['_id']
 
         try:
-
             # atualizamos o registro com os dados dos ratings do youtube.
-            desenho_acorde, lista_idx_notas, foi_sucesso, mensagem = obter_desenho_lista_idx_notas(id)
+            desenho_acorde, lista_idx_notas, lista_notas, foi_sucesso, mensagem = obter_desenho_lista_idx_notas(id)
             dictUpdate = {"desenho_acorde": desenho_acorde, "lista_idx_notas": lista_idx_notas,
+                          "lista_notas": lista_notas,
                           "foi_sucesso": foi_sucesso, "mensagem": mensagem}
 
         except BaseException as exc:
             dictUpdate = {"desenho_acorde": desenho_acorde, "lista_idx_notas": [],
-                          "foi_sucesso": False, "mensagem": mensagem}
+                          "foi_sucesso": False, lista_notas: [], "mensagem": mensagem}
 
             logging.error("Erro ao processar o registro <%s>. Detalhes: %s..." % (id, exc))
 
@@ -46,37 +42,32 @@ def traduzir_acordes(idx, qtd):
 
 
 if __name__ == "__main__":
-    # registros = colecao_dicionario.find({"desenho_acorde": {"$exists": 0}})
-    #
-    # qtd_registros = registros.count()
+    # # REGISTROS QUE NAO FORAM PROCESSADOS OU QUE FORAM PROCESSADAS COM ERRO
+    # query = {"$or": [{"foi_sucesso": {"$exists": 0}}, {"foi_sucesso": False}]}
+    # # REGISTROS QUE NAO FORAM PROCESSADOS
+    # query = {"desenho_acorde": {"$exists": 0}}
+    # REGISTROS QUE FORAM PROCESSADOS COM SUCESSO
+    query = {"foi_sucesso": True}
 
-    traduzir_acordes(0, 10000)
+    registros = colecao_dicionario.find(query)
+    qtd_registros = registros.count()
+
+    import concurrent.futures
+
+    qtd_registros_por_thread = 50
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        for i in range(0, qtd_registros, qtd_registros_por_thread):
+            idx = 0
+            lista_processar = []
+            for registro in registros:
+                lista_processar.append(registro)
+                idx = idx + 1
+                if idx >= qtd_registros_por_thread:
+                    break
+
+            executor.submit(traduzir_acordes, lista_processar)
 
 
-    # colecao_dicionario = db["acordes_sucesso_erro"]
-    #
-    # erros = colecao_dicionario.find_one({"_id":False})['acordes']
-    #
-    # count_sim = 0
-    # count_nao = 0
-    #
-    # for acorde in erros:
-    # try:
-    # desenho = obter_desenho_cifraclub(acorde)
-    # print acorde, "SIM"
-    #         count_sim = count_sim + 1
-    #     except BaseException as exc:
-    #         print acorde, "NAO"
-    #         count_nao = count_nao + 1
-    #
-    #
-    # print(count_sim, count_nao)
 
-
-    # import concurrent.futures
-    #
-    # with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-    #     for i in range(0, qtd_registros, 50):
-    #         executor.submit(traduzir_acordes, i, 50)
 
 

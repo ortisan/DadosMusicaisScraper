@@ -35,3 +35,13 @@ ITEM_PIPELINES = {
     # 'scrapy_mongodb.MongoDBPipeline': 300,
 }
 
+# CONFIGURACOES_LASTFM
+LASTFM_API_KEY = ""
+LASTFM_API_SECRET = ""
+
+# In order to perform a write operation you need to authenticate yourself
+LASTFM_USERNAME = ""
+import pylast
+
+LASTFM_PASSWORD = pylast.md5("")
+

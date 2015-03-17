@@ -6,9 +6,10 @@ from urlparse import urlunsplit
 import datetime
 
 import scrapy
+
 from scrapy.http import Request
-import scrapy.log
 from pymongo import MongoClient
+from scrapy import log
 
 from DadosMusicaisScraper.utils import *
 from DadosMusicaisScraper.items import Musica
@@ -71,7 +72,7 @@ class MusicasPorArtistaCifraClubSpider(scrapy.Spider):
     def parse_musicas(self, response):
 
         log.msg(">> Musica <(%s)> lida..." % (response.url),
-                       level=log.INFO)
+                level=log.INFO)
 
         nome_musica = response.css('#ai_musica::text')[0].extract()
         artista = response.css('#ai_artista a::text')[0].extract()
@@ -117,14 +118,3 @@ class MusicasPorArtistaCifraClubSpider(scrapy.Spider):
                      linhas_html_cifraclub=linhas_html_cifra)
 
 
-if __name__ == '__main__':
-    url = 'http://www.cifraclub.com.br/banda-ego/juro/'
-    scheme, netloc, path, query, fragment = urlsplit(url)
-
-    path = path.split('/')[1]
-
-    query = ''
-
-    url_musicas_artista = urlunsplit((scheme, netloc, path, query, fragment))
-
-    print url

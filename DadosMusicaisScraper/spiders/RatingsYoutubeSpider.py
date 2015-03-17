@@ -13,7 +13,7 @@ from DadosMusicaisScraper.settings import *
 from DadosMusicaisScraper.items import Musica
 from DadosMusicaisScraper.utils import *
 
-
+#TODO ACRESCENTAR DOIS RATINGS
 class RatingsYoutubeSpider(scrapy.Spider):
     name = "RatingsYoutubeSpider"
     allowed_domains = ["youtube.com"]
