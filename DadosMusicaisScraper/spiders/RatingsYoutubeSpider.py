@@ -51,7 +51,7 @@ class RatingsYoutubeSpider(scrapy.Spider):
 
     def parse_listagem_videos(self, response):
         try:
-            link_video = response.css("ol#section-list div.yt-lockup-video:nth-child(1) a")
+            link_video = response.css("ol.section-list div.yt-lockup-video:nth-child(1) a")
             url_video_youtube = 'https://www.youtube.com'
 
             if (len(link_video) > 0):

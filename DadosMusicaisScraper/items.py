@@ -17,6 +17,7 @@ class Musica(scrapy.Item):
     modos_cifraclub = scrapy.Field()
     inversoes_cifraclub = scrapy.Field()
     qtd_exibicoes_cifraclub = scrapy.Field()
+    processamento_cifraflub = scrapy.Field()
     qtd_exibicoes_youtube = scrapy.Field()
     qtd_gostei_youtube = scrapy.Field()
     qtd_nao_gostei_youtube = scrapy.Field()

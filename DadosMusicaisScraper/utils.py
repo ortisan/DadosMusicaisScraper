@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from pymongo import MongoClient
+
 __author__ = 'marcelo'
 
 import logging
@@ -6,10 +8,10 @@ import urllib
 import urllib2
 import json
 import re
+from DadosMusicaisScraper.settings import *
 
 from music21 import chord
 from music21 import interval
-
 
 LOG_FILENAME = 'utils.log'
 logging.basicConfig(filename=LOG_FILENAME,
@@ -21,6 +23,7 @@ idx_inicio_capo = [7, 12, 17, 22, 26, 31]
 acordes_cache = {}
 desenhos_acordes_cache = {}
 idx_notas_acordes_cache = {}
+notas_acordes_cache = {}
 
 
 def eh_vazio(valor):
@@ -48,7 +51,7 @@ def obter_valor_default(valor, valor_default):
     return retorno
 
 
-def obter_dados_acorde(acorde_str, capo):
+def obter_dados_acorde(acorde_str, capo=0):
     acorde = acordes_cache.get(acorde_str)
 
     match_bemol = re.match("^([A-G]b)", acorde_str)
@@ -59,41 +62,37 @@ def obter_dados_acorde(acorde_str, capo):
         lista_notas_escala = notas_escala_bemol
 
     if acorde == None:
-        # desenho_acorde_str = obter_desenho_cifraclub(acorde_str)
-        desenho_acorde_str = obter_desenho_echord(acorde_str)
+        desenho_acorde_str, lista_idx_notas, lista_notas, flag_sucesso, msg = obter_desenho_lista_idx_notas(acorde_str)
 
-        lista_notas_acorde = []
-        desenho_acorde = desenho_acorde_str.split()
-        lista_idx_notas = []
-        for i in range(0, 6):
-            nota_str = desenho_acorde[i]
-            if nota_str != "X":
-                nota = int(nota_str)
-                inicio_capo = idx_inicio_capo[i]
-                idx_nota = (inicio_capo + nota) % 12
-                # nota_traduzida = notas[idx_nota]
-                # lista_notas.append(nota_traduzida)
-                lista_idx_notas.append(idx_nota)
+        unique = []
+        [unique.append(item) for item in lista_notas if item not in unique]
 
-        for i in lista_idx_notas:
-            lista_notas_acorde.append(lista_notas_escala[i])
+        acorde = chord.Chord(unique)
 
-        acorde = chord.Chord(lista_notas_acorde)
-
-    tonica = [nota for nota in lista_notas_escala if nota[0] == acorde_str[0]][0]
+    # TODO VERIFICAR SE ESSA LOGICA ESTA OK
+    tonica = [nota for nota in lista_notas if nota[0] == acorde_str[0]][0]
 
     acorde.root(tonica)
 
-    math_inversao = re.match("^.+\/([A-G])", acorde_str)
+    #o baixo é sempre a primeira nota da lista.
+    acorde.bass(lista_notas[0])
 
-    baixo = tonica
+    # math_inversao = re.match("^.+\/([A-G])", acorde_str)
+    #
+    # baixo = tonica
+    #
+    # if math_inversao != None:
+    #     primeira_nota_baixo = math_inversao.group(1)
+    #     baixo = [nota for nota in lista_notas_escala if nota[0] == primeira_nota_baixo][0]
+    #     # TODO VERIFICAR SE ACHA A NOTA
+    #
+    #
+    # acorde.bass(baixo)
 
-    if math_inversao != None:
-        primeira_nota_baixo = math_inversao.group(1)
-        baixo = [nota for nota in lista_notas_escala if nota[0] == primeira_nota_baixo][0]
-        # TODO VERIFICAR SE ACHA A NOTA
 
-    acorde.bass(baixo)
+    acorde.commonName
+    acorde.quality
+
     acordes_cache[acorde_str] = acorde
     # if sinonimo != sinonimo:
     # acordes_cache[sinonimo] = acorde
@@ -102,8 +101,6 @@ def obter_dados_acorde(acorde_str, capo):
     acorde_com_capo = acorde.transpose(aInterval)
 
     return acorde_com_capo
-
-
 
 
 def transpor_acorde(obj_acorde, capo):
@@ -132,36 +129,37 @@ def transpor_acorde(obj_acorde, capo):
         return [], [], None
 
 
-    def obter_desenho_lista_idx_notas(acorde_str):
-        # desenho_acorde_str = obter_desenho_cifraclub(acorde_str)
-        if acorde_str in desenhos_acordes_cache:
-            desenho_acorde_str = desenhos_acordes_cache[acorde_str]
-            idx_lista_notas_acorde = idx_notas_acordes_cache[acorde_str]
-            return desenho_acorde_str, idx_lista_notas_acorde, True, 'Sucesso - Cache'
-        else:
+def obter_desenho_lista_idx_notas(acorde_str):
+    # desenho_acorde_str = obter_desenho_cifraclub(acorde_str)
+    if acorde_str in desenhos_acordes_cache:
+        desenho_acorde_str = desenhos_acordes_cache[acorde_str]
+        idx_lista_notas_acorde = idx_notas_acordes_cache[acorde_str]
+        lista_notas = notas_acordes_cache[acorde_str]
+        return desenho_acorde_str, idx_lista_notas_acorde, lista_notas, True, 'Sucesso - Cache'
+    else:
+        try:
             try:
-                try:
-                    desenho_acorde_str = obter_desenho_echord(acorde_str)
-                except BaseException as exc:
-                    desenho_acorde_str = obter_desenho_cifraclub(acorde_str)
-
-                desenho_acorde = desenho_acorde_str.split()
-                lista_idx_notas = []
-                lista_notas = []
-                for i in range(0, 6):
-                    nota_str = desenho_acorde[i]
-                    if nota_str != "X":
-                        nota = int(nota_str)
-                        inicio_capo = idx_inicio_capo[i]
-                        idx_nota = (inicio_capo + nota) % 12
-                        nota_traduzida = notas_escala_sus[idx_nota]
-                        lista_notas.append(nota_traduzida)
-                        lista_idx_notas.append(idx_nota)
-                return desenho_acorde_str, lista_idx_notas, lista_notas, True, 'Sucesso'
-
+                desenho_acorde_str = obter_desenho_echord(acorde_str)
             except BaseException as exc:
-                # TODO VERIFICAR O TIPO DE ERRO
-                return '', [], [], False, "Erro: %s" % exc
+                desenho_acorde_str = obter_desenho_cifraclub(acorde_str)
+
+            desenho_acorde = desenho_acorde_str.split()
+            lista_idx_notas = []
+            lista_notas = []
+            for i in range(0, 6):
+                nota_str = desenho_acorde[i]
+                if nota_str != "X":
+                    nota = int(nota_str)
+                    inicio_capo = idx_inicio_capo[i]
+                    idx_nota = (inicio_capo + nota) % 12
+                    nota_traduzida = notas_escala_sus[idx_nota]
+                    lista_notas.append(nota_traduzida)
+                    lista_idx_notas.append(idx_nota)
+            return desenho_acorde_str, lista_idx_notas, lista_notas, True, 'Sucesso'
+
+        except BaseException as exc:
+            # TODO VERIFICAR O TIPO DE ERRO
+            return '', [], [], False, "Erro: %s" % exc
 
 
 def obter_lista_idx_oitava_notas(desenho_acorde):
@@ -259,6 +257,22 @@ def obter_novos_unicos_tonicas_baixos_modos(acordes_str, capo=0):
     return unicos, tonicas, modos
 
 
+def carregar_dicionario_acordes():
+    if len(desenhos_acordes_cache) == 0:
+        client = MongoClient(MONGODB_URI)
+        db = client[MONGODB_DATABASE]
+        colecao = db[MONGODB_COLLECTION_DA]
+        acordes = colecao.find({'foi_sucesso': True})
+        for acorde in acordes:
+            chave = acorde["_id"]
+            desenho_acorde = acorde["desenho_acorde"]
+            idx_notas = acorde['lista_idx_notas']
+            notas = acorde['lista_notas']
+            desenhos_acordes_cache[chave] = desenho_acorde
+            idx_notas_acordes_cache[chave] = idx_notas
+            notas_acordes_cache[chave] = notas
+
+
 if __name__ == '__main__':
     # import re
     #
@@ -285,13 +299,3 @@ if __name__ == '__main__':
     # print(unicos)
 
     # obter_desenho_chord_c('Abm');
-
-
-
-
-
-
-
-
-
-

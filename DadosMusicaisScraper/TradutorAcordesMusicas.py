@@ -22,7 +22,6 @@ logging.basicConfig(filename=LOG_FILENAME,
 
 acordes = {}
 
-
 def traduzir_acordes_musicas(registros):
     for registro in registros:
         id = registro['_id']

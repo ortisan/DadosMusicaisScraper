@@ -9,7 +9,7 @@
 //mongoimport -d scrapy -c substituicao_acordes /Users/marcelo/Documents/Ambiente/Projetos/Python/DadosMusicaisScraper/traducao.json
 
 // EXPORTAMOS E IMPORTAMOS A COLECAO DE MUSICAS
-//mongoexport -d scrapy -c musicas --out /Users/marcelo/Documents/Ambiente/Projetos/Python/DadosMusicaisScraper/musicas.json
+//mongoexport -d scrapy2 -c musicas --out /Users/marcelo/Documents/Ambiente/Projetos/Python/DadosMusicaisScraper/musicas.json
 //mongoimport -d scrapy -c musicas /Users/marcelo/Documents/Ambiente/Projetos/Python/DadosMusicaisScraper/musicas.json
 
 //EXPORTAMOS E IMPORTAMOS A COLECAO DE MUSICAS COM ERRO
@@ -22,6 +22,11 @@
 
 //mongoexport -d scrapy -c acordes_estilos --out /Users/marcelo/Documents/Ambiente/Projetos/Python/DadosMusicaisScraper/acordes_estilos.json
 //mongoimport -d scrapy -c acordes_estilos2 /Users/marcelo/Documents/Ambiente/Projetos/Python/DadosMusicaisScraper/acordes_estilos.json
+
+mongoexport -d scrapy -c acordes_estilos --out /Users/marcelo/Documents/Ambiente/Projetos/Python/DadosMusicaisScraper/acordes_estilos.json
+
+
+mongoexport -d scrapy -c musicas_tcc --out /Users/marcelo/Documents/Ambiente/Projetos/Python/DadosMusicaisScraper/musicas_tcc.json
 
 
 db.musicas.update({}, {
@@ -37,6 +42,8 @@ db.musicas.update({}, {
         "capo:cifraclub": "capo_cifraclub"
     }
 }, {multi: true})
+
+
 
 db.musicas.update({}, {$unset: {"qtd_exibicoes_cifraclub": ""}}, {multi: true})
 
@@ -77,11 +84,11 @@ var limit = {$limit: 30000};
 var group = {"$group": {"_id": "$estilo", "acordes": {"$push": "$seq_acordes_cifraclub"}}};
 
 db.musicas.aggregate(skip, limit, project, unwind).forEach(function (doc) {
-    db.acordes_estilos.insert({_id: doc.seq_acordes_cifraclub});
+    db.dicionario_acordes.insert({_id: doc.seq_acordes_cifraclub});
 });
 
 db.musicas.aggregate(skip, limit, project, unwind, group).forEach(function (doc) {
-    db.acordes_estilos.insert(doc);
+    db.dicionario_acordes.insert(doc);
 });
 
 

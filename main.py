@@ -6,7 +6,6 @@ import getopt
 
 from scrapy import cmdline
 
-
 def main(argv):
     try:
         opts, args = getopt.getopt(argv, 's:')
