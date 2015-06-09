@@ -10,6 +10,7 @@ import scrapy
 from scrapy.http import Request
 from scrapy.selector import Selector
 from selenium import webdriver
+
 from scrapy import log
 
 from DadosMusicaisScraper.utils import *
@@ -17,14 +18,12 @@ from DadosMusicaisScraper.items import Musica
 
 
 class MusicasPorEstiloCifraClubSpider(scrapy.Spider):
-
     name = 'MusicasPorEstiloCifraClubSpider'
     allwed_domains = ['cifraclub.com.br']
     start_urls = ['http://www.cifraclub.com.br/estilos/']
 
     def __init__(self):
         self.driver_cifra = webdriver.Firefox()
-
 
     def parse(self, response):
         for a_estilo in response.css('.lista_estilos li a'):
@@ -74,54 +73,69 @@ class MusicasPorEstiloCifraClubSpider(scrapy.Spider):
                 log.msg("Erro ao processar o estilo <%s>. Detalhes: %s..." % (nome_estilo, exc),
                         loglevel=log.ERROR, logstdout=None)
 
-
     def parse_musicas(self, response):
 
         log.msg(">> Musica <(%s)> lida..." % (response.url),
                 level=log.INFO)
 
-        qtd_exibicoes_cifraclub_str = response.css('#v_exibicoes')[0].extract()
-        regex = re.compile(r'[^0-9]*')
-        qtd_exibicoes_cifraclub = int(obter_valor_default(regex.sub('', qtd_exibicoes_cifraclub_str), '0'))
-
-        div_cifra = response.css('#cifra_cnt')
-
-        linhas_html_cifra = div_cifra[0].extract().replace('\t', '').replace('\r', '').split('\n')
-
-        tom_txt = div_cifra.css('pre#ct_tom_cifra a#cifra_troca_tom::text')
-
-        tom = None
-
-        if len(tom_txt) > 0:
-            tom = tom_txt[0].extract()
-
-        seq_acordes = div_cifra.css('pre#ct_cifra b::text').extract()
-
-        capo_txt = div_cifra.css('pre#ct_tom_cifra span#info_capo_cifra a::text')
-
-        capo = 0
-        if len(capo_txt) > 0:
-            capo = int(re.search('(\d+)', capo_txt[0].extract()).group(0))
-
-        possui_capo = capo > 0
-        possui_tabs = len(div_cifra.css('span.tablatura')) > 0
         nome_musica = response.meta['nome']
         artista = response.meta['artista']
         estilo = response.meta['estilo']
-        # import hashlib
-        # hashlib.sha224(artista + ' - ' + nome_musica).hexdigest()
         _id = artista + ' - ' + nome_musica
 
-        yield Musica(_id=_id,
-                     dt_insercao=datetime.datetime.today(),
-                     estilo_cifraclub=estilo,
-                     nome=nome_musica,
-                     artista=artista,
-                     tom_cifraclub=tom,
-                     possui_tabs_cifraclub=possui_tabs,
-                     possui_capo_cifraclub=possui_capo,
-                     capo_cifraclub=capo,
-                     seq_acordes_cifraclub=seq_acordes,
-                     qtd_exibicoes_cifraclub=qtd_exibicoes_cifraclub,
-                     url_cifraclub=response.url,
-                     linhas_html_cifraclub=linhas_html_cifra)
+        try:
+            qtd_exibicoes_cifraclub_str = response.css('.cifra_exib strong')[0].extract()
+            regex = re.compile(r'[^0-9]*')
+            qtd_exibicoes_cifraclub = int(obter_valor_default(regex.sub('', qtd_exibicoes_cifraclub_str), '0'))
+
+            div_cifra = response.css('.cifra_cnt')
+
+            linhas_html_cifra = div_cifra[0].extract().replace('\t', '').replace('\r', '').split('\n')
+
+            tom_txt = div_cifra.css('#cifra_tom a::text')
+
+            tom = None
+
+            if len(tom_txt) > 0:
+                tom = tom_txt[0].extract()
+
+            seq_acordes = div_cifra.css('pre b::text').extract()
+
+            capo_txt = div_cifra.css('#cifra_capo a::text')
+
+            capo = 0
+            if len(capo_txt) > 0:
+                capo = int(re.search('(\d+)', capo_txt[0].extract()).group(0))
+
+            possui_capo = capo > 0
+            possui_tabs = len(div_cifra.css('span.tablatura')) > 0
+
+            yield Musica(_id=_id,
+                 dt_insercao=datetime.datetime.today(),
+                 estilo_cifraclub=estilo,
+                 nome=nome_musica,
+                 artista=artista,
+                 tom_cifraclub=tom,
+                 possui_tabs_cifraclub=possui_tabs,
+                 possui_capo_cifraclub=possui_capo,
+                 capo_cifraclub=capo,
+                 seq_acordes_cifraclub=seq_acordes,
+                 qtd_exibicoes_cifraclub=qtd_exibicoes_cifraclub,
+                 url_cifraclub=response.url,
+                 linhas_html_cifraclub=linhas_html_cifra,
+                 processamento_cifraflub=True)
+
+        except BaseException as exc:
+            log.msg("Erro ao processar a musica <%s>. Detalhes: %s..." % (_id, exc),
+                    loglevel=log.ERROR, logstdout=None)
+            yield Musica(_id=_id,
+                 dt_insercao=datetime.datetime.today(),
+                 estilo_cifraclub=estilo,
+                 nome=nome_musica,
+                 url_cifraclub=response.url,
+                 artista=artista,
+                 processamento_cifraflub= False)
+
+
+
+

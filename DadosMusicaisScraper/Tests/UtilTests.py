@@ -3,6 +3,7 @@ __author__ = 'marcelo'
 
 import unittest
 
+
 from DadosMusicaisScraper.utils import *
 
 

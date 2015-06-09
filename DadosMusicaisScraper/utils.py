@@ -10,7 +10,6 @@ import re
 from music21 import chord
 from music21 import interval
 
-
 LOG_FILENAME = 'utils.log'
 logging.basicConfig(filename=LOG_FILENAME,
                     level=logging.ERROR)
@@ -104,8 +103,6 @@ def obter_dados_acorde(acorde_str, capo):
     return acorde_com_capo
 
 
-
-
 def transpor_acorde(obj_acorde, capo):
     foi_sucesso = obj_acorde['foi_sucesso']
     if foi_sucesso:
@@ -132,36 +129,36 @@ def transpor_acorde(obj_acorde, capo):
         return [], [], None
 
 
-    def obter_desenho_lista_idx_notas(acorde_str):
-        # desenho_acorde_str = obter_desenho_cifraclub(acorde_str)
-        if acorde_str in desenhos_acordes_cache:
-            desenho_acorde_str = desenhos_acordes_cache[acorde_str]
-            idx_lista_notas_acorde = idx_notas_acordes_cache[acorde_str]
-            return desenho_acorde_str, idx_lista_notas_acorde, True, 'Sucesso - Cache'
-        else:
+def obter_desenho_lista_idx_notas(acorde_str):
+    # desenho_acorde_str = obter_desenho_cifraclub(acorde_str)
+    if acorde_str in desenhos_acordes_cache:
+        desenho_acorde_str = desenhos_acordes_cache[acorde_str]
+        idx_lista_notas_acorde = idx_notas_acordes_cache[acorde_str]
+        return desenho_acorde_str, idx_lista_notas_acorde, True, 'Sucesso - Cache'
+    else:
+        try:
             try:
-                try:
-                    desenho_acorde_str = obter_desenho_echord(acorde_str)
-                except BaseException as exc:
-                    desenho_acorde_str = obter_desenho_cifraclub(acorde_str)
-
-                desenho_acorde = desenho_acorde_str.split()
-                lista_idx_notas = []
-                lista_notas = []
-                for i in range(0, 6):
-                    nota_str = desenho_acorde[i]
-                    if nota_str != "X":
-                        nota = int(nota_str)
-                        inicio_capo = idx_inicio_capo[i]
-                        idx_nota = (inicio_capo + nota) % 12
-                        nota_traduzida = notas_escala_sus[idx_nota]
-                        lista_notas.append(nota_traduzida)
-                        lista_idx_notas.append(idx_nota)
-                return desenho_acorde_str, lista_idx_notas, lista_notas, True, 'Sucesso'
-
+                desenho_acorde_str = obter_desenho_echord(acorde_str)
             except BaseException as exc:
-                # TODO VERIFICAR O TIPO DE ERRO
-                return '', [], [], False, "Erro: %s" % exc
+                desenho_acorde_str = obter_desenho_cifraclub(acorde_str)
+
+            desenho_acorde = desenho_acorde_str.split()
+            lista_idx_notas = []
+            lista_notas = []
+            for i in range(0, 6):
+                nota_str = desenho_acorde[i]
+                if nota_str != "X":
+                    nota = int(nota_str)
+                    inicio_capo = idx_inicio_capo[i]
+                    idx_nota = (inicio_capo + nota) % 12
+                    nota_traduzida = notas_escala_sus[idx_nota]
+                    lista_notas.append(nota_traduzida)
+                    lista_idx_notas.append(idx_nota)
+            return desenho_acorde_str, lista_idx_notas, lista_notas, True, 'Sucesso'
+
+        except BaseException as exc:
+            # TODO VERIFICAR O TIPO DE ERRO
+            return '', [], [], False, "Erro: %s" % exc
 
 
 def obter_lista_idx_oitava_notas(desenho_acorde):
@@ -285,13 +282,3 @@ if __name__ == '__main__':
     # print(unicos)
 
     # obter_desenho_chord_c('Abm');
-
-
-
-
-
-
-
-
-
-

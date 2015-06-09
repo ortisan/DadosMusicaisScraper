@@ -16,22 +16,19 @@ qtd_nao_processados = 0
 
 
 def obter_dados_last_fm(registros):
-    # registros = colecao.find({'duracao_lastfm': {'$exists': 0}}, {'_id': True, "artista": True, "nome": True}).skip(
-    # idx).limit(qtd)
-    # registros = colecao.find({'duracao_lastfm': {'$exists': 0}}, {'_id': True, "artista": True, "nome": True})
-
     for registro in registros:
         duracao = -1
         qtd_audicoes = -1
+        url_musica = ""
 
         try:
             id = registro["_id"]
             artista = registro['artista']
             nome = registro['nome']
-
             track = network.get_track(artista, nome)
             duracao = track.get_duration()
             qtd_audicoes = track.get_playcount()
+            url_musica = track.get_url()
         except BaseException as exc:
             # TODO LOGAR OS QUE NAO FORAM ENCONTRADOS.
             global qtd_nao_processados
@@ -39,7 +36,8 @@ def obter_dados_last_fm(registros):
             print exc
 
         dictUpdate = {"duracao_lastfm": duracao,
-                      "qtd_audicoes_lastfm": qtd_audicoes}
+                      "qtd_audicoes_lastfm": qtd_audicoes,
+                      "url_lastfm": url_musica}
 
         # atualizamos o registro com os dados dos ratings do youtube.
         colecao.update({"_id": id}, {'$set': dictUpdate})
@@ -47,22 +45,14 @@ def obter_dados_last_fm(registros):
 
 if __name__ == "__main__":
     # Busca os registros que nao possuem dados do lastfm
-    qtd_registros = colecao.find({'duracao_lastfm': -1}, {'_id': True, "artista": True, "nome": True}).count()
-
-    # with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-    # for i in range(0, qtd_registros, 50):
-    # executor.submit(obter_dados_last_fm, i, 50)
-
-    # artista = 'Mariza'
-    # nome = 'Rosa Branca'
-    # track = network.get_track(artista, nome)
-    # duracao = track.get_duration()
-    # qtd_audicao_fm = track.get_playcount()
-    registros = colecao.find({'duracao_lastfm': -1}, {'_id': True, "artista": True, "nome": True})
+    qtd_registros = colecao.find({"$or": [{"duracao_lastfm": {'$exists': 0}}, {"duracao_lastfm": -1}]},
+                                 {'_id': True, "artista": True, "nome": True}).count()
+    registros = colecao.find({"$or": [{"duracao_lastfm": {'$exists': 0}}, {"duracao_lastfm": -1}]},
+                             {'_id': True, "artista": True, "nome": True})
     import concurrent.futures
 
     qtd_registros_por_thread = 50
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
         for i in range(0, qtd_registros, qtd_registros_por_thread):
             idx = 0
             lista_processar = []
@@ -73,4 +63,3 @@ if __name__ == "__main__":
                     break
 
             executor.submit(obter_dados_last_fm, lista_processar)
-
