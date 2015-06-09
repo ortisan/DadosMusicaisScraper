@@ -12,6 +12,7 @@ from DadosMusicaisScraper.settings import *
 
 from music21 import chord
 from music21 import interval
+from music21 import note
 
 LOG_FILENAME = 'utils.log'
 logging.basicConfig(filename=LOG_FILENAME,
@@ -53,28 +54,20 @@ def obter_valor_default(valor, valor_default):
 
 def obter_dados_acorde(acorde_str, capo=0):
     acorde = acordes_cache.get(acorde_str)
-
-    match_bemol = re.match("^([A-G]b)", acorde_str)
-
-    lista_notas_escala = notas_escala_sus
-
-    if match_bemol != None:
-        lista_notas_escala = notas_escala_bemol
-
     if acorde == None:
         desenho_acorde_str, lista_idx_notas, lista_notas, flag_sucesso, msg = obter_desenho_lista_idx_notas(acorde_str)
-
-        unique = []
-        [unique.append(item) for item in lista_notas if item not in unique]
-
-        acorde = chord.Chord(unique)
+        notas_unicas = []
+        notas_music21 = []
+        [notas_unicas.append(item) for item in lista_notas if item not in notas_unicas]
+        [notas_music21.append(note.Note(item)) for item in notas_unicas]
+        acorde = chord.Chord(notas_music21)
 
     # TODO VERIFICAR SE ESSA LOGICA ESTA OK
     tonica = [nota for nota in lista_notas if nota[0] == acorde_str[0]][0]
 
     acorde.root(tonica)
 
-    #o baixo é sempre a primeira nota da lista.
+    # o baixo é sempre a primeira nota da lista.
     acorde.bass(lista_notas[0])
 
     # math_inversao = re.match("^.+\/([A-G])", acorde_str)
@@ -89,16 +82,16 @@ def obter_dados_acorde(acorde_str, capo=0):
     #
     # acorde.bass(baixo)
 
-
     acorde.commonName
-    acorde.quality
-
     acordes_cache[acorde_str] = acorde
-    # if sinonimo != sinonimo:
-    # acordes_cache[sinonimo] = acorde
 
     aInterval = interval.Interval(capo)
     acorde_com_capo = acorde.transpose(aInterval)
+
+    # TODO ROOT E BASS NAO ESTAO SENDO TRANSPOSTOS
+    assert acorde != acorde_com_capo
+
+    acorde_com_capo.root()
 
     return acorde_com_capo
 
@@ -146,13 +139,21 @@ def obter_desenho_lista_idx_notas(acorde_str):
             desenho_acorde = desenho_acorde_str.split()
             lista_idx_notas = []
             lista_notas = []
+
+            # Verificamos se trata-se de uma nota bemol. Se sim, usamos a escala de bemol.
+            match_bemol = re.match("^([A-G]b)", acorde_str)
+            if match_bemol != None:
+                lista_notas_escala = notas_escala_bemol
+            else:
+                lista_notas_escala = notas_escala_sus
+
             for i in range(0, 6):
                 nota_str = desenho_acorde[i]
                 if nota_str != "X":
                     nota = int(nota_str)
                     inicio_capo = idx_inicio_capo[i]
                     idx_nota = (inicio_capo + nota) % 12
-                    nota_traduzida = notas_escala_sus[idx_nota]
+                    nota_traduzida = lista_notas_escala[idx_nota]
                     lista_notas.append(nota_traduzida)
                     lista_idx_notas.append(idx_nota)
             return desenho_acorde_str, lista_idx_notas, lista_notas, True, 'Sucesso'
@@ -237,11 +238,7 @@ def obter_novos_unicos_tonicas_baixos_modos(acordes_str, capo=0):
     for acorde_str in acordes_str:
         try:
             logging.info(u"Obtendo dados do acorde <%s>..." % acorde_str)
-
-            logging.info(u"Traduzindo acorde <%s> no music21..." % acorde_str)
-
             acorde = obter_dados_acorde(acorde_str, capo)
-
             nome_acorde = acorde.fullName
             tonica = acorde.root().name
             modo = acorde.quality
