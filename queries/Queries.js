@@ -87,3 +87,9 @@ db.musicas.find({$and: [{seq_acordes_cifraclub: {$exists:1}}, {$where : "this.se
     }
 });
 
+
+//# MUSICAS COM OS ACORDES TRADUZIDOS
+db.musicas.find({"$and": [{"acordes_unicos_cifraclub": {"$exists": 0}},
+                                           {"seq_acordes_cifraclub": {'$exists': 1}},
+                                           {"$where": "this.seq_acordes_cifraclub.length > 0"}]}).count()
+

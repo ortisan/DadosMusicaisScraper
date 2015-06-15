@@ -25,9 +25,10 @@ def normalizar_dados_cifras(registros):
         try:
             seq_acordes = registro['seq_acordes_cifraclub']
             capo = registro['capo_cifraclub']
-            unicos, tonicas, modos = obter_novos_unicos_tonicas_baixos_modos(seq_acordes, capo)
+            unicos, tonicas, baixos, modos = obter_novos_unicos_tonicas_baixos_modos(seq_acordes, capo)
             dictUpdate = {"acordes_unicos_cifraclub": unicos,
                           "tonicas_cifraclub": tonicas,
+                          'baixos_cifraclub': baixos,
                           "modos_cifraclub": modos}
             # atualizamos o registro com os dados dos ratings do youtube.
             colecao.update({"_id": id}, {'$set': dictUpdate})

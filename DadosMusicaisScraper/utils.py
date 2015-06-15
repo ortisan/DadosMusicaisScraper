@@ -55,44 +55,20 @@ def obter_valor_default(valor, valor_default):
 def obter_dados_acorde(acorde_str, capo=0):
     acorde = acordes_cache.get(acorde_str)
     if acorde == None:
-        desenho_acorde_str, lista_idx_notas, lista_notas, flag_sucesso, msg = obter_desenho_lista_idx_notas(acorde_str)
-        notas_unicas = []
-        notas_music21 = []
-        [notas_unicas.append(item) for item in lista_notas if item not in notas_unicas]
-        [notas_music21.append(note.Note(item)) for item in notas_unicas]
-        acorde = chord.Chord(notas_music21)
+        acorde, desenho_acorde_str, lista_idx_notas, lista_notas, flag_sucesso, msg = obter_desenho_lista_idx_notas(
+            acorde_str)
 
-    # TODO VERIFICAR SE ESSA LOGICA ESTA OK
-    tonica = [nota for nota in lista_notas if nota[0] == acorde_str[0]][0]
+    interv_capo = interval.Interval(capo)
+    acorde_com_capo = acorde.transpose(interv_capo)
+    root = acorde.root()
+    root = root.transpose(interv_capo)
+    bass = acorde.bass()
+    bass = bass.transpose(interv_capo)
 
-    acorde.root(tonica)
-
-    # o baixo é sempre a primeira nota da lista.
-    acorde.bass(lista_notas[0])
-
-    # math_inversao = re.match("^.+\/([A-G])", acorde_str)
-    #
-    # baixo = tonica
-    #
-    # if math_inversao != None:
-    #     primeira_nota_baixo = math_inversao.group(1)
-    #     baixo = [nota for nota in lista_notas_escala if nota[0] == primeira_nota_baixo][0]
-    #     # TODO VERIFICAR SE ACHA A NOTA
-    #
-    #
-    # acorde.bass(baixo)
-
-    acorde.commonName
-    acordes_cache[acorde_str] = acorde
-
-    aInterval = interval.Interval(capo)
-    acorde_com_capo = acorde.transpose(aInterval)
-
-    # TODO ROOT E BASS NAO ESTAO SENDO TRANSPOSTOS
+    acorde_com_capo.root(root)
+    acorde_com_capo.bass(bass)
+    # As referencias devem ser diferentes. Senao estamos mudando o objeto em cache
     assert acorde != acorde_com_capo
-
-    acorde_com_capo.root()
-
     return acorde_com_capo
 
 
@@ -125,10 +101,11 @@ def transpor_acorde(obj_acorde, capo):
 def obter_desenho_lista_idx_notas(acorde_str):
     # desenho_acorde_str = obter_desenho_cifraclub(acorde_str)
     if acorde_str in desenhos_acordes_cache:
+        acorde = acordes_cache[acorde_str];
         desenho_acorde_str = desenhos_acordes_cache[acorde_str]
         idx_lista_notas_acorde = idx_notas_acordes_cache[acorde_str]
         lista_notas = notas_acordes_cache[acorde_str]
-        return desenho_acorde_str, idx_lista_notas_acorde, lista_notas, True, 'Sucesso - Cache'
+        return acorde, desenho_acorde_str, idx_lista_notas_acorde, lista_notas, True, 'Sucesso - Cache'
     else:
         try:
             try:
@@ -156,11 +133,20 @@ def obter_desenho_lista_idx_notas(acorde_str):
                     nota_traduzida = lista_notas_escala[idx_nota]
                     lista_notas.append(nota_traduzida)
                     lista_idx_notas.append(idx_nota)
-            return desenho_acorde_str, lista_idx_notas, lista_notas, True, 'Sucesso'
+
+            acorde = obter_acorde(desenho_acorde_str, lista_notas)
+
+            # Atualizo o cache
+            acordes_cache[acorde_str] = acorde
+            desenhos_acordes_cache[acorde_str] = acorde_str
+            idx_notas_acordes_cache[acorde_str] = lista_idx_notas
+            notas_acordes_cache[acorde_str] = lista_notas
+
+            return acorde, desenho_acorde_str, lista_idx_notas, lista_notas, True, 'Sucesso'
 
         except BaseException as exc:
             # TODO VERIFICAR O TIPO DE ERRO
-            return '', [], [], False, "Erro: %s" % exc
+            return None, '', [], [], False, "Erro: %s" % exc
 
 
 def obter_lista_idx_oitava_notas(desenho_acorde):
@@ -177,6 +163,15 @@ def obter_lista_idx_oitava_notas(desenho_acorde):
             lista_idx_notas.append(idx_nota)
             lista_oitavas.append(oitava)
     return lista_idx_notas, lista_oitavas
+
+
+def obter_acorde(acorde_str, lista_notas):
+    acorde = chord.Chord(lista_notas)
+    tonica = [nota for nota in lista_notas if nota[0] == acorde_str[0]][0]
+    acorde.root(tonica)
+    # o baixo é sempre a primeira nota da lista.
+    acorde.bass(lista_notas[0])
+    return acorde
 
 
 def obter_desenho_cifraclub(acorde):
@@ -233,6 +228,7 @@ def substituir_caracteres_acorde(acorde):
 def obter_novos_unicos_tonicas_baixos_modos(acordes_str, capo=0):
     unicos = []
     tonicas = []
+    baixos = []
     modos = []
 
     for acorde_str in acordes_str:
@@ -241,17 +237,19 @@ def obter_novos_unicos_tonicas_baixos_modos(acordes_str, capo=0):
             acorde = obter_dados_acorde(acorde_str, capo)
             nome_acorde = acorde.fullName
             tonica = acorde.root().name
-            modo = acorde.quality
+            modo = acorde.commonName
+            baixo = acorde.bass().name
 
             if not nome_acorde in unicos:
                 unicos.append(nome_acorde)
                 tonicas.append(tonica)
                 modos.append(modo)
+                baixos.append(baixo)
         except BaseException as exc:
             logging.error(u"Erro ao traduzir o acorde: <%s>. Detalhes: %s" % (acorde_str, exc))
             raise exc
 
-    return unicos, tonicas, modos
+    return unicos, tonicas, baixos, modos
 
 
 def carregar_dicionario_acordes():
@@ -259,15 +257,18 @@ def carregar_dicionario_acordes():
         client = MongoClient(MONGODB_URI)
         db = client[MONGODB_DATABASE]
         colecao = db[MONGODB_COLLECTION_DA]
-        acordes = colecao.find({'foi_sucesso': True})
-        for acorde in acordes:
-            chave = acorde["_id"]
-            desenho_acorde = acorde["desenho_acorde"]
-            idx_notas = acorde['lista_idx_notas']
-            notas = acorde['lista_notas']
+        registros = colecao.find({'foi_sucesso': True})
+        for registro in registros:
+            ## TODO ESTA DANDO ERRO NOS ACORDES COM )
+            chave = registro["_id"]
+            desenho_acorde = registro["desenho_acorde"]
+            idx_notas = registro['lista_idx_notas']
+            lista_notas = registro['lista_notas']
             desenhos_acordes_cache[chave] = desenho_acorde
             idx_notas_acordes_cache[chave] = idx_notas
-            notas_acordes_cache[chave] = notas
+            notas_acordes_cache[chave] = lista_notas
+            acorde = obter_acorde(chave, lista_notas)
+            acordes_cache[acorde]
 
 
 if __name__ == '__main__':
