@@ -22,7 +22,7 @@ def traduzir_acordes(registros):
     for registro in registros:
         id = registro['_id']
         try:
-            desenho_acorde, lista_idx_notas, lista_notas, foi_sucesso, mensagem = obter_desenho_lista_idx_notas(id)
+            acorde21, desenho_acorde, lista_idx_notas, lista_notas, foi_sucesso, mensagem = obter_acorde21_desenho_listanotas_idxnotas(id)
             dictUpdate = {"desenho_acorde": desenho_acorde, "lista_idx_notas": lista_idx_notas,
                           "lista_notas": lista_notas,
                           "foi_sucesso": foi_sucesso, "mensagem": mensagem}

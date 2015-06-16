@@ -52,10 +52,10 @@ def obter_valor_default(valor, valor_default):
     return retorno
 
 
-def obter_dados_acorde(acorde_str, capo=0):
+def obter_acorde_music21(acorde_str, capo=0):
     acorde = acordes_cache.get(acorde_str)
     if acorde == None:
-        acorde, desenho_acorde_str, lista_idx_notas, lista_notas, flag_sucesso, msg = obter_desenho_lista_idx_notas(
+        acorde, desenho_acorde_str, lista_idx_notas, lista_notas, flag_sucesso, msg = obter_acorde21_desenho_listanotas_idxnotas(
             acorde_str)
 
     interv_capo = interval.Interval(capo)
@@ -98,8 +98,7 @@ def transpor_acorde(obj_acorde, capo):
         return [], [], None
 
 
-def obter_desenho_lista_idx_notas(acorde_str):
-    # desenho_acorde_str = obter_desenho_cifraclub(acorde_str)
+def obter_acorde21_desenho_listanotas_idxnotas(acorde_str):
     if acorde_str in desenhos_acordes_cache:
         acorde = acordes_cache[acorde_str];
         desenho_acorde_str = desenhos_acordes_cache[acorde_str]
@@ -231,20 +230,22 @@ def obter_novos_unicos_tonicas_baixos_modos(acordes_str, capo=0):
     baixos = []
     modos = []
 
+    # Removo os duplicados.
+    acordes_str = set(acordes_str)
+
     for acorde_str in acordes_str:
         try:
             logging.info(u"Obtendo dados do acorde <%s>..." % acorde_str)
-            acorde = obter_dados_acorde(acorde_str, capo)
-            nome_acorde = acorde.fullName
-            tonica = acorde.root().name
-            modo = acorde.commonName
-            baixo = acorde.bass().name
+            acorde_21 = obter_acorde_music21(acorde_str, capo)
+            nome_acorde = acorde_21.fullName
+            tonica = acorde_21.root().name
+            baixo = acorde_21.bass().name
+            modo = acorde_21.commonName
 
-            if not nome_acorde in unicos:
-                unicos.append(nome_acorde)
-                tonicas.append(tonica)
-                modos.append(modo)
-                baixos.append(baixo)
+            unicos.append(nome_acorde)
+            tonicas.append(tonica)
+            baixos.append(baixo)
+            modos.append(modo)
         except BaseException as exc:
             logging.error(u"Erro ao traduzir o acorde: <%s>. Detalhes: %s" % (acorde_str, exc))
             raise exc
@@ -259,16 +260,20 @@ def carregar_dicionario_acordes():
         colecao = db[MONGODB_COLLECTION_DA]
         registros = colecao.find({'foi_sucesso': True})
         for registro in registros:
-            ## TODO ESTA DANDO ERRO NOS ACORDES COM )
-            chave = registro["_id"]
-            desenho_acorde = registro["desenho_acorde"]
-            idx_notas = registro['lista_idx_notas']
-            lista_notas = registro['lista_notas']
-            desenhos_acordes_cache[chave] = desenho_acorde
-            idx_notas_acordes_cache[chave] = idx_notas
-            notas_acordes_cache[chave] = lista_notas
-            acorde = obter_acorde(chave, lista_notas)
-            acordes_cache[acorde]
+            try:
+                ## TODO ACORDES QUE NAO COMECAO COM A-G DAO ERRO
+                chave = registro["_id"]
+                lista_notas = registro['lista_notas']
+                desenho_acorde = registro["desenho_acorde"]
+                idx_notas = registro['lista_idx_notas']
+
+                acorde = obter_acorde(chave, lista_notas)
+                acordes_cache[chave] = acorde
+                desenhos_acordes_cache[chave] = desenho_acorde
+                idx_notas_acordes_cache[chave] = idx_notas
+                notas_acordes_cache[chave] = lista_notas
+            except BaseException as exc:
+                logging.error(u"Erro ao traduzir o acorde: <%s>. Detalhes: %s" % (chave, exc))
 
 
 if __name__ == '__main__':

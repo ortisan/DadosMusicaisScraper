@@ -3,7 +3,7 @@
 //mongorestore --db scrapy_tcc_restore /Users/marcelo/Documents/Ambiente/Projetos/Python/DadosMusicaisScraper/backup_bases/base_scrapy_0607
 
 // MUSICAS QUE NAO POSSUEM ACORDES CIFRACLUB
-db.musicas.find( { $where: "this.seq_acordes_cifraclub.length > 0" } );
+db.musicas.find({$where: "this.seq_acordes_cifraclub.length > 0"});
 // MUSICAS QUE NAO POSSUEM DADOS YOUTUBE
 db.musicas.find({'qtd_exibicoes_youtube': {'$exists': 0}}, {"artista": 1, "nome": 1}).count()
 // Merge da base antiga
@@ -16,7 +16,7 @@ db.musicas.find({'qtd_exibicoes_youtube': {'$exists': 1}}, {
     qtd_nao_gostei_youtube: 1,
     dt_publicacao_youtube: 1,
     dias_desde_publicacao_youtube: 1
-}).forEach(function(doc){
+}).forEach(function (doc) {
     db.musicas.update({_id: doc._id}, {
         url_busca_youtube: doc.url_busca_youtube,
         url_video_youtube: doc.url_video_youtube,
@@ -24,17 +24,30 @@ db.musicas.find({'qtd_exibicoes_youtube': {'$exists': 1}}, {
         qtd_gostei_youtube: doc.qtd_gostei_youtube,
         qtd_nao_gostei_youtube: doc.qtd_nao_gostei_youtube,
         dt_publicacao_youtube: doc.dt_publicacao_youtube,
-        dias_desde_publicacao_youtube: doc.dias_desde_publicacao_youtube})
+        dias_desde_publicacao_youtube: doc.dias_desde_publicacao_youtube
+    })
 })
 
-db.musicas.find({"$or": [{"duracao_lastfm": {'$exists': 0}}, {"duracao_lastfm": -1}]}, {'_id': true, "artista": true, "nome": true})
-db.musicas.find({"$or": [{"duracao_spotify": {"$exists": 0}}, {"duracao_spotify": -1}]}, {'_id': true, "artista": true, "nome": true})
+db.musicas.find({"$or": [{"duracao_lastfm": {'$exists': 0}}, {"duracao_lastfm": -1}]}, {
+    '_id': true,
+    "artista": true,
+    "nome": true
+})
+db.musicas.find({"$or": [{"duracao_spotify": {"$exists": 0}}, {"duracao_spotify": -1}]}, {
+    '_id': true,
+    "artista": true,
+    "nome": true
+})
 
 db.dicionario_acordes.find({"$or": [{"foi_sucesso": {"$exists": 0}}, {"foi_sucesso": false}]})
 
 
 // VERIFICAMOS SE A BASE POSSUI DADOS DO LASTFM
-qtd_registros = db.musicas.find({"duracao_lastfm": {"$exists": 0}}, {'_id': true, "artista": true, "nome": true}).count()
+qtd_registros = db.musicas.find({"duracao_lastfm": {"$exists": 0}}, {
+    '_id': true,
+    "artista": true,
+    "nome": true
+}).count()
 
 /* ### PREPARACAO DO DICIONARIO DE ACORDES ### */
 
@@ -46,7 +59,7 @@ var bulk = db.dicionario_acordes.initializeUnorderedBulkOp();
 var max_elements_bulk = 100;
 var i = 0;
 
-db.musicas.aggregate({"$project" : {"seq_acordes_cifraclub" : "$seq_acordes_cifraclub"}}, {$unwind: "$seq_acordes_cifraclub"}).forEach(function(doc){
+db.musicas.aggregate({"$project": {"seq_acordes_cifraclub": "$seq_acordes_cifraclub"}}, {$unwind: "$seq_acordes_cifraclub"}).forEach(function (doc) {
     var acorde = doc.seq_acordes_cifraclub;
     if (i < max_elements_bulk) {
         bulk.find({_id: acorde}).upsert().replaceOne({_id: acorde});
@@ -76,12 +89,12 @@ db.dicionario_acordes.aggregate(project, group).forEach(function (doc) {
 
 // ### PRECISO SABER QUANTAS MUSICAS ESTAO COM ACORDES INVALIDOS PARA VER SE VALE A PENA TRATAR OU NAO
 // MUSICAS QUE NAO POSSUEM CIFRAS
-db.musicas.find({seq_acordes_cifraclub: {$exists:0}})
+db.musicas.find({seq_acordes_cifraclub: {$exists: 0}})
 acordes_erro = db.acordes_sucesso_erro.findOne({_id: false}).acordes;
-db.musicas.find({$and: [{seq_acordes_cifraclub: {$exists:1}}, {$where : "this.seq_acordes_cifraclub.length > 0"}]}).forEach(function(doc) {
+db.musicas.find({$and: [{seq_acordes_cifraclub: {$exists: 1}}, {$where: "this.seq_acordes_cifraclub.length > 0"}]}).forEach(function (doc) {
     for (i = 0; i < doc.seq_acordes_cifraclub.length; i++) {
         if (acordes_erro.indexOf(doc.seq_acordes_cifraclub[i]) > 0) {
-            db.musicas_erro.insert({ _id: doc._id,  acorde_erro: doc.seq_acordes_cifraclub[i]});
+            db.musicas_erro.insert({_id: doc._id, acorde_erro: doc.seq_acordes_cifraclub[i]});
             break;
         }
     }
@@ -89,7 +102,13 @@ db.musicas.find({$and: [{seq_acordes_cifraclub: {$exists:1}}, {$where : "this.se
 
 
 //# MUSICAS COM OS ACORDES TRADUZIDOS
-db.musicas.find({"$and": [{"acordes_unicos_cifraclub": {"$exists": 0}},
-                                           {"seq_acordes_cifraclub": {'$exists': 1}},
-                                           {"$where": "this.seq_acordes_cifraclub.length > 0"}]}).count()
+db.musicas.find({
+    "$and": [{"acordes_unicos_cifraclub": {"$exists": 1}},
+        {"seq_acordes_cifraclub": {'$exists': 1}},
+        {"$where": "this.seq_acordes_cifraclub.length > 0"}]
+}).count()
+
+
+//# ACORDES QUE NAO COMECAM COM [A-G]
+db.dicionario_acordes.find({foi_sucesso: true, _id: {$regex: '^[^a-zA-Z]'}}).pretty()
 

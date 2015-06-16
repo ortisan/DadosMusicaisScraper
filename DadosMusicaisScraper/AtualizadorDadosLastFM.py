@@ -45,6 +45,8 @@ def obter_dados_last_fm(registros):
 
 if __name__ == "__main__":
     # Busca os registros que nao possuem dados do lastfm
+
+
     qtd_registros = colecao.find({"$or": [{"duracao_lastfm": {'$exists': 0}}, {"duracao_lastfm": -1}]},
                                  {'_id': True, "artista": True, "nome": True}).count()
     registros = colecao.find({"$or": [{"duracao_lastfm": {'$exists': 0}}, {"duracao_lastfm": -1}]},

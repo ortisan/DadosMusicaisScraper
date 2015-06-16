@@ -19,7 +19,6 @@ logging.basicConfig(filename=LOG_FILENAME,
 # TODO Talvez tenha que trazer o tom, caso haja diferencas entre os acordes e os acordes especificos do tom.
 
 def normalizar_dados_cifras(registros):
-
     for registro in registros:
         id = registro['_id']
         try:
@@ -43,8 +42,8 @@ if __name__ == "__main__":
     carregar_dicionario_acordes()
 
     query = {"$and": [{"acordes_unicos_cifraclub": {"$exists": 0}},
-                                           {"seq_acordes_cifraclub": {'$exists': 1}},
-                                           {"$where": "this.seq_acordes_cifraclub.length > 0"}]}
+                      {"seq_acordes_cifraclub": {'$exists': 1}},
+                      {"$where": "this.seq_acordes_cifraclub.length > 0"}]}
     # Busca os registros que nao possuem dados do lastfm
     qtd_registros = colecao.find(query, {'_id': True}).count()
 
