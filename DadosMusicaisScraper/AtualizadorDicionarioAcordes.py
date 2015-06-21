@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 __author__ = 'marcelo'
 
-from pymongo import MongoClient
-
-from DadosMusicaisScraper.settings import *
 from utils import *
 
 client = MongoClient(MONGODB_URI)
@@ -12,17 +9,20 @@ colecao_dicionario = db[MONGODB_COLLECTION_DA]
 
 import logging
 
-LOG_FILENAME = 'atualizador.log'
-logging.basicConfig(filename=LOG_FILENAME,
-                    level=logging.ERROR)
+LOG_FILENAME = 'atualizador_dicionario_acordes.log'
+logging.basicConfig(filename=LOG_FILENAME, filemode='w', level=logging.ERROR)
 
 # TODO Talvez tenha que trazer o tom, caso haja diferencas entre os acordes e os acordes especificos do tom.
 
 def traduzir_acordes(registros):
     for registro in registros:
         id = registro['_id']
+        desenho_acorde = None
+        if 'desenho_acorde' in registro:
+            desenho_acorde = registro['desenho_acorde']
         try:
-            acorde21, desenho_acorde, lista_idx_notas, lista_notas, foi_sucesso, mensagem = obter_acorde21_desenho_listanotas_idxnotas(id)
+            acorde21, desenho_acorde, lista_idx_notas, lista_notas, foi_sucesso, mensagem = obter_acorde21_desenho_listanotas_idxnotas(
+                id, desenho_acorde)
             dictUpdate = {"desenho_acorde": desenho_acorde, "lista_idx_notas": lista_idx_notas,
                           "lista_notas": lista_notas,
                           "foi_sucesso": foi_sucesso, "mensagem": mensagem}
@@ -40,8 +40,11 @@ def traduzir_acordes(registros):
 if __name__ == "__main__":
 
     query = {"$or": [{"foi_sucesso": {"$exists": 0}}, {"foi_sucesso": False}]}
-    qtd_registros = colecao_dicionario.find(query).count()
-    registros = colecao_dicionario.find(query)
+    fields = {"_id": 1, "desenho_acorde": 1}
+    # query = {"foi_sucesso": True}
+    # query = {}
+    qtd_registros = colecao_dicionario.find(query, fields).count()
+    registros = colecao_dicionario.find(query, fields)
 
     import concurrent.futures
 

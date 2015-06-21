@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 __author__ = 'marcelo'
 
-from pymongo import MongoClient
-
-from DadosMusicaisScraper.settings import *
 from utils import *
 
 client = MongoClient(MONGODB_URI)
@@ -12,9 +9,8 @@ colecao = db[MONGODB_COLLECTION]
 
 import logging
 
-LOG_FILENAME = 'atualizador.log'
-logging.basicConfig(filename=LOG_FILENAME,
-                    level=logging.ERROR)
+LOG_FILENAME = 'atualizador_cifras.log'
+logging.basicConfig(filename=LOG_FILENAME, filemode='w', level=logging.ERROR)
 
 # TODO Talvez tenha que trazer o tom, caso haja diferencas entre os acordes e os acordes especificos do tom.
 
@@ -24,12 +20,12 @@ def normalizar_dados_cifras(registros):
         try:
             seq_acordes = registro['seq_acordes_cifraclub']
             capo = registro['capo_cifraclub']
-            unicos, tonicas, baixos, modos = obter_novos_unicos_tonicas_baixos_modos(seq_acordes, capo)
+            unicos, tonicas, baixos, modos = obter_unicos_tonicas_baixos_modos(seq_acordes, capo)
             dictUpdate = {"acordes_unicos_cifraclub": unicos,
                           "tonicas_cifraclub": tonicas,
                           'baixos_cifraclub': baixos,
                           "modos_cifraclub": modos}
-            # atualizamos o registro com os dados dos ratings do youtube.
+            # atualizamos o registro com os dados dos acordes.
             colecao.update({"_id": id}, {'$set': dictUpdate})
 
         except BaseException as exc:
@@ -44,7 +40,7 @@ if __name__ == "__main__":
     query = {"$and": [{"acordes_unicos_cifraclub": {"$exists": 0}},
                       {"seq_acordes_cifraclub": {'$exists': 1}},
                       {"$where": "this.seq_acordes_cifraclub.length > 0"}]}
-    # Busca os registros que nao possuem dados do lastfm
+
     qtd_registros = colecao.find(query, {'_id': True}).count()
 
     registros = colecao.find(query, {'_id': True, "seq_acordes_cifraclub": True, "capo_cifraclub": True})

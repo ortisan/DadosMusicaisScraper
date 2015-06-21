@@ -23,10 +23,10 @@
 //mongoexport -d scrapy -c acordes_estilos --out /Users/marcelo/Documents/Ambiente/Projetos/Python/DadosMusicaisScraper/acordes_estilos.json
 //mongoimport -d scrapy -c acordes_estilos2 /Users/marcelo/Documents/Ambiente/Projetos/Python/DadosMusicaisScraper/acordes_estilos.json
 
-mongoexport -d scrapy -c acordes_estilos --out /Users/marcelo/Documents/Ambiente/Projetos/Python/DadosMusicaisScraper/acordes_estilos.json
+//mongoexport -d scrapy -c acordes_estilos --out /Users/marcelo/Documents/Ambiente/Projetos/Python/DadosMusicaisScraper/acordes_estilos.json
 
 
-mongoexport -d scrapy -c musicas_tcc --out /Users/marcelo/Documents/Ambiente/Projetos/Python/DadosMusicaisScraper/musicas_tcc.json
+//mongoexport -d scrapy -c musicas_tcc --out /Users/marcelo/Documents/Ambiente/Projetos/Python/DadosMusicaisScraper/musicas_tcc.json
 
 
 db.musicas.update({}, {
@@ -265,62 +265,48 @@ var map_contadores = function () {
 
     var map_tonicas = {
         "A": 0,
+        "B": 0,
+        "C": 0,
+        "D": 0,
+        "E": 0,
+        "F": 0,
+        "G": 0,
         "A#": 0,
-        "B": 0,
-        "C": 0,
         "C#": 0,
-        "D": 0,
         "D#": 0,
-        "E": 0,
-        "F": 0,
         "F#": 0,
-        "G": 0,
         "G#": 0,
-        "A": 0,
         "B-": 0,
-        "B": 0,
-        "C": 0,
         "D-": 0,
-        "D": 0,
         "E-": 0,
-        "E": 0,
-        "F": 0,
         "G-": 0,
-        "G": 0,
         "A-": 0
     };
     var map_baixos = {
         "A": 0,
+        "B": 0,
+        "C": 0,
+        "D": 0,
+        "E": 0,
+        "F": 0,
+        "G": 0,
         "A#": 0,
-        "B": 0,
-        "C": 0,
         "C#": 0,
-        "D": 0,
         "D#": 0,
-        "E": 0,
-        "F": 0,
         "F#": 0,
-        "G": 0,
         "G#": 0,
-        "A": 0,
         "B-": 0,
-        "B": 0,
-        "C": 0,
         "D-": 0,
-        "D": 0,
         "E-": 0,
-        "E": 0,
-        "F": 0,
         "G-": 0,
-        "G": 0,
         "A-": 0
     };
 
     var map_modos = { "Balinese Pelog pentatonic": 0, "C all combinatorial (P6, I3, RI9)": 0, "Hirajoshi pentatonic": 0, "Javanese pentatonic": 0, "Kumoi pentachord": 0, "Messiaen's truncated mode 6": 0, "Neapolitan pentachord": 0, "all-interval tetrachord": 0, "alternating tetramirror": 0, "augmented major tetrachord": 0, "augmented seventh chord": 0, "augmented triad": 0, "augmented-diminished ninth chord": 0, "augmented-eleventh": 0, "augmented-sixth pentachord": 0, "center-cluster pentamirror": 0, "combinatorial RI (RI1)": 0, "combinatorial RI (RI9)": 0, "diminished minor-ninth chord": 0, "diminished pentacluster": 0, "diminished seventh chord": 0, "diminished triad": 0, "diminished-augmented ninth chord": 0, "diminished-major ninth chord": 0, "dominant seventh chord": 0, "dominant-eleventh": 0, "dominant-ninth": 0, "dorian hexachord": 0, "dorian pentachord": 0, "double-fourth tetramirror": 0, "enigmatic pentachord": 0, "flat-ninth pentachord": 0, "half-diminished seventh chord": 0, "harmonic minor tetrachord": 0, "incomplete dominant-seventh chord": 0, "incomplete half-diminished seventh chord": 0, "incomplete major-seventh chord": 0, "incomplete minor-seventh chord": 0, "interval class 5": 0, "locrian hexachord": 0, "lydian pentachord": 0, "lydian tetrachord": 0, "major pentachord": 0, "major pentatonic": 0, "major seventh chord": 0, "major triad": 0, "major-augmented ninth chord": 0, "major-diminished tetrachord": 0, "major-minor tetramirror": 0, "major-ninth chord": 0, "major-second major tetrachord": 0, "major-second minor tetrachord": 0, "minor hexachord": 0, "minor seventh chord": 0, "minor triad": 0, "minor-augmented tetrachord": 0, "minor-diminished ninth chord": 0, "minor-diminished tetrachord": 0, "minor-major ninth chord": 0, "minor-ninth chord": 0, "minor-second diminished tetrachord": 0, "minor-second quartal tetrachord": 0, "perfect-fourth diminished tetrachord": 0, "perfect-fourth major tetrachord": 0, "perfect-fourth minor tetrachord": 0, "phrygian hexamirror": 0, "phrygian pentachord": 0, "phrygian tetrachord": 0, "quartal tetramirror": 0, "quartal trichord": 0, "tritone quartal tetrachord": 0, "tritone-fourth": 0, "whole-tone pentachord": 0, "whole-tone tetramirror": 0, "whole-tone trichord": 0};
 
-    var tonicas = this.tonicas_music21;
-    var baixos = this.baixos_music21;
-    var modos = this.modos_music21;
+    var tonicas = this.tonicas_cifraclub;
+    var baixos = this.baixos_cifraclub;
+    var modos = this.modos_cifraclub;
 
     if (tonicas) {
         for (i = 0; i < tonicas.length; i++) {

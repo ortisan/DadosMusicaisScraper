@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
 __author__ = 'marcelo'
 
+import logging
+
 from pymongo import MongoClient
 
 from DadosMusicaisScraper.settings import *
+
+LOG_FILENAME = 'atualizador_spotify.log'
+logging.basicConfig(filename=LOG_FILENAME, filemode='w',
+                    level=logging.ERROR)
 
 client = MongoClient(MONGODB_URI)
 db = client[MONGODB_DATABASE]
@@ -27,11 +33,11 @@ def obter_dados_spotify(registros):
         popularidade = -1
         url_musica = ""
 
-        try:
-            id = registro["_id"]
-            artista = registro['artista']
-            nome = registro['nome']
+        id = registro["_id"]
+        artista = registro['artista']
+        nome = registro['nome']
 
+        try:
             import spotipy
 
             spotify = spotipy.Spotify(token)
@@ -45,7 +51,7 @@ def obter_dados_spotify(registros):
             # TODO LOGAR OS QUE NAO FORAM ENCONTRADOS.
             global qtd_nao_processados
             qtd_nao_processados = qtd_nao_processados + 1
-            print exc
+            logging.error("Erro ao processar o registro <%s>. Detalhes: %s..." % (id, exc))
 
         dictUpdate = {"duracao_spotify": duracao,
                       "popularidade_spotify": popularidade,
@@ -55,11 +61,9 @@ def obter_dados_spotify(registros):
 
 
 if __name__ == "__main__":
-    qtd_registros = colecao.find({"$or": [{"duracao_spotify": {"$exists": 0}}, {"duracao_spotify": -1}]},
-                                 {'_id': True, "artista": True, "nome": True}).count()
-
-    #registros = colecao.find({"duracao_spotify": {'$exists': 0}}, {'_id': True, "artista": True, "nome": True})
-    registros = colecao.find({"duracao_spotify": -1}, {'_id': True, "artista": True, "nome": True})
+    query = {"$or": [{"duracao_spotify": {"$exists": 0}}, {"duracao_spotify": -1}]}
+    qtd_registros = colecao.find(query, {'_id': True, "artista": True, "nome": True}).count()
+    registros = colecao.find(query, {'_id': True, "artista": True, "nome": True})
 
     import concurrent.futures
 

@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
 __author__ = 'marcelo'
 
+import logging
+
 from pymongo import MongoClient
 
 from DadosMusicaisScraper.settings import *
+
+LOG_FILENAME = 'atualizador_lasfm.log'
+logging.basicConfig(filename=LOG_FILENAME, filemode='w',
+                    level=logging.ERROR)
 
 network = pylast.LastFMNetwork(api_key=LASTFM_API_KEY, api_secret=LASTFM_API_SECRET, username=LASTFM_USERNAME,
                                password_hash=LASTFM_PASSWORD)
@@ -21,10 +27,11 @@ def obter_dados_last_fm(registros):
         qtd_audicoes = -1
         url_musica = ""
 
+        id = registro["_id"]
+        artista = registro['artista']
+        nome = registro['nome']
+
         try:
-            id = registro["_id"]
-            artista = registro['artista']
-            nome = registro['nome']
             track = network.get_track(artista, nome)
             duracao = track.get_duration()
             qtd_audicoes = track.get_playcount()
@@ -33,24 +40,23 @@ def obter_dados_last_fm(registros):
             # TODO LOGAR OS QUE NAO FORAM ENCONTRADOS.
             global qtd_nao_processados
             qtd_nao_processados = qtd_nao_processados + 1
-            print exc
+            logging.error("Erro ao processar o registro <%s>. Detalhes: %s..." % (id, exc))
 
         dictUpdate = {"duracao_lastfm": duracao,
                       "qtd_audicoes_lastfm": qtd_audicoes,
                       "url_lastfm": url_musica}
 
-        # atualizamos o registro com os dados dos ratings do youtube.
+        # atualizamos o registro com os dados da lastfm.
         colecao.update({"_id": id}, {'$set': dictUpdate})
 
 
 if __name__ == "__main__":
     # Busca os registros que nao possuem dados do lastfm
 
-
-    qtd_registros = colecao.find({"$or": [{"duracao_lastfm": {'$exists': 0}}, {"duracao_lastfm": -1}]},
-                                 {'_id': True, "artista": True, "nome": True}).count()
-    registros = colecao.find({"$or": [{"duracao_lastfm": {'$exists': 0}}, {"duracao_lastfm": -1}]},
-                             {'_id': True, "artista": True, "nome": True})
+    query = {"$or": [{"duracao_lastfm": {'$exists': 0}}, {"duracao_lastfm": -1}]}
+    fields = {'_id': True, "artista": True, "nome": True}
+    qtd_registros = colecao.find(query, fields).count()
+    registros = colecao.find(query, fields)
     import concurrent.futures
 
     qtd_registros_por_thread = 50

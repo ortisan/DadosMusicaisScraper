@@ -12,10 +12,10 @@ from DadosMusicaisScraper.settings import *
 
 from music21 import chord
 from music21 import interval
-from music21 import note
+from music21 import harmony
 
 LOG_FILENAME = 'utils.log'
-logging.basicConfig(filename=LOG_FILENAME,
+logging.basicConfig(filename=LOG_FILENAME, filemode='w',
                     level=logging.ERROR)
 
 notas_escala_sus = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#']
@@ -28,11 +28,6 @@ notas_acordes_cache = {}
 
 
 def eh_vazio(valor):
-    """
-
-    :param valor:
-    :return:
-    """
     retorno = False
     if valor is None or valor == '':
         retorno = True
@@ -40,12 +35,6 @@ def eh_vazio(valor):
 
 
 def obter_valor_default(valor, valor_default):
-    """
-    Caso o valor seja None ou '', retornamos o valor_default
-    :param valor: Valor que será avaliado
-    :param valor_default: Valor default.
-    :return: Valor caso seja != None e != '', senão valor_default.
-    """
     retorno = valor
     if eh_vazio(valor):
         retorno = valor_default
@@ -72,49 +61,20 @@ def obter_acorde_music21(acorde_str, capo=0):
     return acorde_com_capo
 
 
-def transpor_acorde(obj_acorde, capo):
-    foi_sucesso = obj_acorde['foi_sucesso']
-    if foi_sucesso:
-        desenho_acorde = obj_acorde['desenho_acorde']
-        lista_idx_notas, lista_oitavas = obter_lista_idx_oitava_notas(desenho_acorde)
-        nova_lista_idx_notas = [(idx_nota + capo) % 12 for idx_nota in lista_idx_notas]
-
-        lista_notas_escala = notas_escala_sus
-        nome_acorde = obj_acorde['_id']
-        match_bemol = re.match("^([A-G]b)", nome_acorde)
-
-        if match_bemol != None:
-            lista_notas_escala = notas_escala_bemol
-
-        novas_notas = []
-        for i in range(0, len(lista_idx_notas)):
-            idx_nota = lista_idx_notas[i]
-            oitava = lista_oitavas[i]
-            novas_notas.append(lista_notas_escala[idx_nota] + str(oitava))
-
-        acorde_21 = chord.Chord(novas_notas)
-        return nova_lista_idx_notas, novas_notas, acorde_21
-    else:
-        return [], [], None
-
-
-def obter_acorde21_desenho_listanotas_idxnotas(acorde_str):
+def obter_acorde21_desenho_listanotas_idxnotas(acorde_str, desenho_acorde_str=None):
     if acorde_str in desenhos_acordes_cache:
-        acorde = acordes_cache[acorde_str];
+        acorde = acordes_cache[acorde_str]
         desenho_acorde_str = desenhos_acordes_cache[acorde_str]
         idx_lista_notas_acorde = idx_notas_acordes_cache[acorde_str]
         lista_notas = notas_acordes_cache[acorde_str]
         return acorde, desenho_acorde_str, idx_lista_notas_acorde, lista_notas, True, 'Sucesso - Cache'
     else:
         try:
-            try:
-                desenho_acorde_str = obter_desenho_echord(acorde_str)
-            except BaseException as exc:
-                desenho_acorde_str = obter_desenho_cifraclub(acorde_str)
-
-            desenho_acorde = desenho_acorde_str.split()
-            lista_idx_notas = []
-            lista_notas = []
+            if desenho_acorde_str == None or len(desenho_acorde_str) == 0:
+                try:
+                    desenho_acorde_str = obter_desenho_echord(acorde_str)
+                except BaseException as exc:
+                    desenho_acorde_str = obter_desenho_cifraclub(acorde_str)
 
             # Verificamos se trata-se de uma nota bemol. Se sim, usamos a escala de bemol.
             match_bemol = re.match("^([A-G]b)", acorde_str)
@@ -123,20 +83,13 @@ def obter_acorde21_desenho_listanotas_idxnotas(acorde_str):
             else:
                 lista_notas_escala = notas_escala_sus
 
-            for i in range(0, 6):
-                nota_str = desenho_acorde[i]
-                if nota_str != "X":
-                    nota = int(nota_str)
-                    inicio_capo = idx_inicio_capo[i]
-                    idx_nota = (inicio_capo + nota) % 12
-                    nota_traduzida = lista_notas_escala[idx_nota]
-                    lista_notas.append(nota_traduzida)
-                    lista_idx_notas.append(idx_nota)
+            lista_idx_notas, lista_notas = obter_lista_idx_notas(desenho_acorde_str, lista_notas_escala)
 
-            acorde = obter_acorde(desenho_acorde_str, lista_notas)
+            acorde = obter_acorde21(acorde_str, lista_notas)
 
             # Atualizo o cache
             acordes_cache[acorde_str] = acorde
+            acorde.commonName
             desenhos_acordes_cache[acorde_str] = acorde_str
             idx_notas_acordes_cache[acorde_str] = lista_idx_notas
             notas_acordes_cache[acorde_str] = lista_notas
@@ -148,10 +101,10 @@ def obter_acorde21_desenho_listanotas_idxnotas(acorde_str):
             return None, '', [], [], False, "Erro: %s" % exc
 
 
-def obter_lista_idx_oitava_notas(desenho_acorde):
+def obter_lista_idx_notas(desenho_acorde, escala=notas_escala_sus):
     desenho_acorde = desenho_acorde.split()
     lista_idx_notas = []
-    lista_oitavas = []
+    lista_notas = []
     for i in range(0, 6):
         nota_str = desenho_acorde[i]
         if nota_str != "X":
@@ -159,14 +112,18 @@ def obter_lista_idx_oitava_notas(desenho_acorde):
             inicio_capo = idx_inicio_capo[i]
             idx_nota = (inicio_capo + nota) % 12
             oitava = int((inicio_capo + nota) / 12)
+            nota_traduzida = escala[idx_nota] + str(oitava + 1)
             lista_idx_notas.append(idx_nota)
-            lista_oitavas.append(oitava)
-    return lista_idx_notas, lista_oitavas
+            lista_notas.append(nota_traduzida)
+
+    return lista_idx_notas, lista_notas
 
 
-def obter_acorde(acorde_str, lista_notas):
+def obter_acorde21(acorde_str, lista_notas):
     acorde = chord.Chord(lista_notas)
+    # TODO Talvez um acorde tenha tonica C e uma nota C#. Pode dar problema
     tonica = [nota for nota in lista_notas if nota[0] == acorde_str[0]][0]
+    acorde.bass()
     acorde.root(tonica)
     # o baixo é sempre a primeira nota da lista.
     acorde.bass(lista_notas[0])
@@ -202,21 +159,6 @@ def obter_desenho_echord(acorde):
     return desenho_acorde_str.replace(",", " ")
 
 
-# def obter_desenho_chord_c(acorde):
-# acorde = substituir_caracteres_acorde(acorde)
-#
-# form_data = {'searchFor': acorde}
-# params = urllib.urlencode(form_data)
-# response = urllib2.urlopen('http://chord-c.com/guitar-chord-search/', params)
-# html_data = response.read()
-# # sinonimo = data['sinonimo']
-# from bs4 import BeautifulSoup
-# soup = BeautifulSoup(html_data)
-# div = soup.find_all("div", class_="diaM")[0]
-# soup.find(class="diaM")
-# return ''
-
-
 def substituir_caracteres_acorde(acorde):
     regex_dim = u'(°|º|7\-)+'
     import re
@@ -224,7 +166,7 @@ def substituir_caracteres_acorde(acorde):
     return re.sub(regex_dim, 'dim', acorde)
 
 
-def obter_novos_unicos_tonicas_baixos_modos(acordes_str, capo=0):
+def obter_unicos_tonicas_baixos_modos(acordes_str, capo=0):
     unicos = []
     tonicas = []
     baixos = []
@@ -267,13 +209,13 @@ def carregar_dicionario_acordes():
                 desenho_acorde = registro["desenho_acorde"]
                 idx_notas = registro['lista_idx_notas']
 
-                acorde = obter_acorde(chave, lista_notas)
+                acorde = obter_acorde21(chave, lista_notas)
                 acordes_cache[chave] = acorde
                 desenhos_acordes_cache[chave] = desenho_acorde
                 idx_notas_acordes_cache[chave] = idx_notas
                 notas_acordes_cache[chave] = lista_notas
             except BaseException as exc:
-                logging.error(u"Erro ao traduzir o acorde: <%s>. Detalhes: %s" % (chave, exc))
+                logging.error(u"Erro ao traduzir o acorde na biblioteca music21: <%s>. Detalhes: %s" % (chave, exc))
 
 
 if __name__ == '__main__':
@@ -282,6 +224,8 @@ if __name__ == '__main__':
     # acorde_str = "D7/B"
     # m = re.match("^.+\/([A-G])", acorde_str)
     # print(m)
+
+    len(None)
 
     seq_acordes = [
         u"D°",
@@ -297,8 +241,15 @@ if __name__ == '__main__':
         "Am7",
         "D7/9b"]
 
-    # unicos, tonicas, modos = obter_novos_unicos_tonicas_baixos_modos(seq_acordes, 0)
-    #
-    # print(unicos)
+    acorde = 'Dbm7'
+    # acorde21 = obter_acorde21_desenho_listanotas_idxnotas(acorde);
 
-    # obter_desenho_chord_c('Abm');
+    # print(acorde21)
+    acorde, desenho_acorde_str, lista_idx_notas, lista_notas, flag_sucesso, msg = obter_acorde21_desenho_listanotas_idxnotas(
+        'C#7(9-)', "X 4 3 4 3 X")
+
+    acorde_str, modo = harmony.chordSymbolFigureFromChord(acorde, True)
+
+    acorde.quality
+
+    acorde.pitchedCommonName
