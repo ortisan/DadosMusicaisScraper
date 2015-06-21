@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 __author__ = 'marcelo'
 
-import logging
+import logging as log_atualizador
 
 from pymongo import MongoClient
 
 from DadosMusicaisScraper.settings import *
 
 LOG_FILENAME = 'atualizador_spotify.log'
-logging.basicConfig(filename=LOG_FILENAME, filemode='w',
-                    level=logging.ERROR)
+log_atualizador.basicConfig(filename=LOG_FILENAME, filemode='w',
+                    level=log_atualizador.ERROR)
 
 client = MongoClient(MONGODB_URI)
 db = client[MONGODB_DATABASE]
@@ -51,7 +51,7 @@ def obter_dados_spotify(registros):
             # TODO LOGAR OS QUE NAO FORAM ENCONTRADOS.
             global qtd_nao_processados
             qtd_nao_processados = qtd_nao_processados + 1
-            logging.error("Erro ao processar o registro <%s>. Detalhes: %s..." % (id, exc))
+            log_atualizador.error("Erro ao processar o registro <%s>. Detalhes: %s..." % (id, exc))
 
         dictUpdate = {"duracao_spotify": duracao,
                       "popularidade_spotify": popularidade,

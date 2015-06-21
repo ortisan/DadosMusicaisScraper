@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 __author__ = 'marcelo'
 
-import logging
+import logging as log_atualizador
 
 from pymongo import MongoClient
 
 from DadosMusicaisScraper.settings import *
 
 LOG_FILENAME = 'atualizador_lasfm.log'
-logging.basicConfig(filename=LOG_FILENAME, filemode='w',
-                    level=logging.ERROR)
+log_atualizador.basicConfig(filename=LOG_FILENAME, filemode='w',
+                            level=log_atualizador.ERROR)
 
 network = pylast.LastFMNetwork(api_key=LASTFM_API_KEY, api_secret=LASTFM_API_SECRET, username=LASTFM_USERNAME,
                                password_hash=LASTFM_PASSWORD)
@@ -40,7 +40,7 @@ def obter_dados_last_fm(registros):
             # TODO LOGAR OS QUE NAO FORAM ENCONTRADOS.
             global qtd_nao_processados
             qtd_nao_processados = qtd_nao_processados + 1
-            logging.error("Erro ao processar o registro <%s>. Detalhes: %s..." % (id, exc))
+            log_atualizador.error("Erro ao processar o registro <%s>. Detalhes: %s..." % (id, exc))
 
         dictUpdate = {"duracao_lastfm": duracao,
                       "qtd_audicoes_lastfm": qtd_audicoes,

@@ -7,10 +7,10 @@ client = MongoClient(MONGODB_URI)
 db = client[MONGODB_DATABASE]
 colecao_dicionario = db[MONGODB_COLLECTION_DA]
 
-import logging
+import logging as log_atualizador
 
 LOG_FILENAME = 'atualizador_dicionario_acordes.log'
-logging.basicConfig(filename=LOG_FILENAME, filemode='w', level=logging.ERROR)
+log_atualizador.basicConfig(filename=LOG_FILENAME, filemode='w', level=log_atualizador.ERROR)
 
 # TODO Talvez tenha que trazer o tom, caso haja diferencas entre os acordes e os acordes especificos do tom.
 
@@ -31,7 +31,7 @@ def traduzir_acordes(registros):
             dictUpdate = {"desenho_acorde": desenho_acorde, "lista_idx_notas": [], "lista_notas": [],
                           "foi_sucesso": False, "mensagem": mensagem}
 
-            logging.error("Erro ao processar o registro <%s>. Detalhes: %s..." % (id, exc))
+            log_atualizador.error("Erro ao processar o registro <%s>. Detalhes: %s..." % (id, exc))
 
         finally:
             colecao_dicionario.update({"_id": id}, {'$set': dictUpdate}, upsert=True)

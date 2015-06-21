@@ -56,11 +56,15 @@ db.dicionario_acordes.update(
     {multi:true}
 )
 
+db.dicionario_acordes.find({ $where: "this.lista_notas.length > 1" })
+
 db.musicas.update(
     {_id:{$exists: 1}},
     {$set:{tonicas_cifraclub: [], acordes_unicos_cifraclub: [], baixos_cifraclub: [], modos_cifraclub: []}},
     {multi:true}
 )
+
+db.musicas.find({ $where: "this.tonicas_cifraclub.length > 1" })
 
 /* ### Preparacao do dicionario de acordes ### */
 
@@ -91,7 +95,18 @@ db.musicas.aggregate(project, unwind).forEach(function (doc) {
 /* ### FIM - Preparacao do dicionario de acordes ### */
 
 
-/* ### Preparacao da base ### */
+/* ### Preparacao da base ADB ### */
+
+// Criacao da base ADB
+db.musicas_pre_adb.remove({});
+// Backup dos registros
+db.musicas.find({}).forEach(function(doc){
+   db.musicas_pre_adb.insert(doc);
+});
+
+db.musicas_pre_adb.count()
+
+db.modos_acordes.remove({})
 
 // Saber os modos
 var bulk = db.modos_acordes.initializeUnorderedBulkOp();
@@ -104,7 +119,7 @@ var project = {"$project": {"modos_cifraclub": "$modos_cifraclub"}};
 
 var unwind = {"$unwind": "$modos_cifraclub"};
 
-db.musicas.aggregate(project, unwind).forEach(function (doc) {
+db.musicas_pre_adb.aggregate(project, unwind).forEach(function (doc) {
     var modo_cifraclub = doc.modos_cifraclub;
     if (i < max_elements_bulk) {
         bulk.find({_id: modo_cifraclub}).upsert().replaceOne({_id: modo_cifraclub});
@@ -116,14 +131,14 @@ db.musicas.aggregate(project, unwind).forEach(function (doc) {
     i++;
 });
 
-// Criacao da base ADB
-db.musicas_pre_adb.remove({});
-// Backup dos registros
-db.musicas.find({}).forEach(function(doc){
-   db.musicas_pre_adb.insert(doc);
+
+var map_modos = {};
+db.modos_acordes.find().forEach(function(doc){
+    map_modos[doc._id] = 0;
 });
 
-db.musicas_pre_adb.count()
+// Pegar esses modos e incluir no map_modos abaixo
+map_modos
 
 var map_contadores = function () {
 
@@ -146,6 +161,7 @@ var map_contadores = function () {
         "G-": 0,
         "A-": 0
     };
+
     var map_baixos = {
         "A": 0,
         "B": 0,
@@ -167,7 +183,85 @@ var map_contadores = function () {
     };
 
     // TODO Fazer os modos
-    var map_modos = { "Balinese Pelog pentatonic": 0, "C all combinatorial (P6, I3, RI9)": 0, "Hirajoshi pentatonic": 0, "Javanese pentatonic": 0, "Kumoi pentachord": 0, "Messiaen's truncated mode 6": 0, "Neapolitan pentachord": 0, "all-interval tetrachord": 0, "alternating tetramirror": 0, "augmented major tetrachord": 0, "augmented seventh chord": 0, "augmented triad": 0, "augmented-diminished ninth chord": 0, "augmented-eleventh": 0, "augmented-sixth pentachord": 0, "center-cluster pentamirror": 0, "combinatorial RI (RI1)": 0, "combinatorial RI (RI9)": 0, "diminished minor-ninth chord": 0, "diminished pentacluster": 0, "diminished seventh chord": 0, "diminished triad": 0, "diminished-augmented ninth chord": 0, "diminished-major ninth chord": 0, "dominant seventh chord": 0, "dominant-eleventh": 0, "dominant-ninth": 0, "dorian hexachord": 0, "dorian pentachord": 0, "double-fourth tetramirror": 0, "enigmatic pentachord": 0, "flat-ninth pentachord": 0, "half-diminished seventh chord": 0, "harmonic minor tetrachord": 0, "incomplete dominant-seventh chord": 0, "incomplete half-diminished seventh chord": 0, "incomplete major-seventh chord": 0, "incomplete minor-seventh chord": 0, "interval class 5": 0, "locrian hexachord": 0, "lydian pentachord": 0, "lydian tetrachord": 0, "major pentachord": 0, "major pentatonic": 0, "major seventh chord": 0, "major triad": 0, "major-augmented ninth chord": 0, "major-diminished tetrachord": 0, "major-minor tetramirror": 0, "major-ninth chord": 0, "major-second major tetrachord": 0, "major-second minor tetrachord": 0, "minor hexachord": 0, "minor seventh chord": 0, "minor triad": 0, "minor-augmented tetrachord": 0, "minor-diminished ninth chord": 0, "minor-diminished tetrachord": 0, "minor-major ninth chord": 0, "minor-ninth chord": 0, "minor-second diminished tetrachord": 0, "minor-second quartal tetrachord": 0, "perfect-fourth diminished tetrachord": 0, "perfect-fourth major tetrachord": 0, "perfect-fourth minor tetrachord": 0, "phrygian hexamirror": 0, "phrygian pentachord": 0, "phrygian tetrachord": 0, "quartal tetramirror": 0, "quartal trichord": 0, "tritone quartal tetrachord": 0, "tritone-fourth": 0, "whole-tone pentachord": 0, "whole-tone tetramirror": 0, "whole-tone trichord": 0};
+    var map_modos = {
+        "major triad" : 0,
+        "minor triad" : 0,
+        "dominant seventh chord" : 0,
+        "major seventh chord" : 0,
+        "minor seventh chord" : 0,
+        "interval class 5" : 0,
+        "incomplete minor-seventh chord" : 0,
+        "quartal trichord" : 0,
+        "incomplete dominant-seventh chord" : 0,
+        "half-diminished seventh chord" : 0,
+        "diminished seventh chord" : 0,
+        "quartal tetramirror" : 0,
+        "major-second major tetrachord" : 0,
+        "perfect-fourth major tetrachord" : 0,
+        "lydian tetrachord" : 0,
+        "minor-diminished ninth chord" : 0,
+        "major-second minor tetrachord" : 0,
+        "whole-tone tetramirror" : 0,
+        "flat-ninth pentachord" : 0,
+        "augmented seventh chord" : 0,
+        "phrygian tetrachord" : 0,
+        "harmonic minor tetrachord" : 0,
+        "all-interval tetrachord" : 0,
+        "major-diminished tetrachord" : 0,
+        "Messiaen's truncated mode 6" : 0,
+        "major pentatonic" : 0,
+        "minor-augmented tetrachord" : 0,
+        "augmented triad" : 0,
+        "minor-second quartal tetrachord" : 0,
+        "major-ninth chord" : 0,
+        "major pentachord" : 0,
+        "minor-second diminished tetrachord" : 0,
+        "perfect-fourth minor tetrachord" : 0,
+        "tritone quartal tetrachord" : 0,
+        "center-cluster pentamirror" : 0,
+        "augmented major tetrachord" : 0,
+        "dominant-ninth" : 0,
+        "Neapolitan pentachord" : 0,
+        "major-minor tetramirror" : 0,
+        "diminished-augmented ninth chord" : 0,
+        "phrygian pentachord" : 0,
+        "Javanese pentatonic" : 0,
+        "perfect-fourth diminished tetrachord" : 0,
+        "whole-tone pentachord" : 0,
+        "Kumoi pentachord" : 0,
+        "diminished-major ninth chord" : 0,
+        "diminished triad" : 0,
+        "incomplete half-diminished seventh chord" : 0,
+        "minor-ninth chord" : 0,
+        "C all combinatorial (P6, I3, RI9)" : 0,
+        "augmented-sixth pentachord" : 0,
+        "alternating tetramirror" : 0,
+        "minor-major ninth chord" : 0,
+        "incomplete major-seventh chord" : 0,
+        "lydian pentachord" : 0,
+        "tritone-fourth" : 0,
+        "minor-diminished tetrachord" : 0,
+        "dorian pentachord" : 0,
+        "whole-tone trichord" : 0,
+        "dominant-eleventh" : 0,
+        "diminished pentacluster" : 0,
+        "enigmatic pentachord" : 0,
+        "augmented-diminished ninth chord" : 0,
+        "Balinese Pelog pentatonic" : 0,
+        "major-augmented ninth chord" : 0,
+        "combinatorial RI (RI1)" : 0,
+        "double-fourth tetramirror" : 0,
+        "diminished minor-ninth chord" : 0,
+        "major-minor diminished pentachord" : 0,
+        "phrygian hexamirror" : 0,
+        "Persian pentamirror" : 0,
+        "minor-seventh pentacluster" : 0,
+        "Lebanese pentachord" : 0,
+        "Hirajoshi pentatonic" : 0,
+        "locrian hexachord" : 0,
+        "minor hexachord" : 0
+    };
+
 
     var tonicas = this.tonicas_cifraclub;
     var baixos = this.baixos_cifraclub;
@@ -193,7 +287,6 @@ var map_contadores = function () {
             }
             map_baixos[baixo] = count_b;
 
-
             var count_m = 1;
             var count_modos = map_modos[modo];
             if (count_modos) {
@@ -209,22 +302,36 @@ var map_contadores = function () {
 var reduce = function (key, values) {
     return values.length;
 };
-db.musicas_pre_adb.mapReduce(map_contadores, reduce, {query: {"acordes_unicos_cifraclub": {"$exists": 1}}, out: "cont"});
 
-var map_modos = function () {
+query_map_reduce = {"$and": [{"tonicas_cifraclub": {'$exists': 1}},
+                      {"$where": "this.tonicas_cifraclub.length > 0"}]}
 
-    var modos = this.modos_music21;
-    if (modos) {
-        for (i = 0; i < modos.length; i++) {
-            emit(modos[i], 1);
-        }
-    }
-};
+db.musicas_pre_adb.mapReduce(map_contadores, reduce, {query: query_map_reduce, out: "cont"});
 
+db.cont.find({}).forEach(function(doc){
+    db.musicas_pre_adb.update({_id: doc._id}, {$set: {cont_tonicas: doc.value.cont_tonicas, cont_baixos: doc.value.cont_baixos, cont_modos: doc.value.cont_modos}});
+});
 
-db.count_modos.find()
-db.musicas_adb.mapReduce(map_modos, reduce, {query: {foi_sucesso_music21: true}, out: "cont_modos"});
+// Obter os campos da tabela
+mr = db.runCommand({
+  "mapreduce" : "musicas_pre_adb",
+  "map" : function() {
+    for (var key in this) { emit(key, null); }
+  },
+  "reduce" : function(key, stuff) { return null; },
+  "out": "musicas_pre_adb" + "_keys"
+})
+
+db[mr.result].distinct("_id")
+
+//COLAR NO ARQUIVO fields.txt E REMOVER COM O REGEX DAS LINHAS AS ASPAS E O VIRG. "|,
+
+//mongoexport -d scrapy_tcc -c musicas_pre_adb --csv --fieldFile ./fields.txt --out ./base_adb.csv
+
+// TODO PREPARAR UMA BASE PARA A ANALISE DE ASSOCIACAO
 
 
 
 /* ### FIM - Preparacao da base ### */
+
+

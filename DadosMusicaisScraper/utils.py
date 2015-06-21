@@ -225,7 +225,7 @@ if __name__ == '__main__':
     # m = re.match("^.+\/([A-G])", acorde_str)
     # print(m)
 
-    len(None)
+
 
     seq_acordes = [
         u"D°",
@@ -246,7 +246,7 @@ if __name__ == '__main__':
 
     # print(acorde21)
     acorde, desenho_acorde_str, lista_idx_notas, lista_notas, flag_sucesso, msg = obter_acorde21_desenho_listanotas_idxnotas(
-        'C#7(9-)', "X 4 3 4 3 X")
+        'E7(#9)')
 
     acorde_str, modo = harmony.chordSymbolFigureFromChord(acorde, True)
 

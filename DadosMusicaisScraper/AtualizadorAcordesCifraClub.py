@@ -7,10 +7,10 @@ client = MongoClient(MONGODB_URI)
 db = client[MONGODB_DATABASE]
 colecao = db[MONGODB_COLLECTION]
 
-import logging
+import logging as log_atualizador
 
 LOG_FILENAME = 'atualizador_cifras.log'
-logging.basicConfig(filename=LOG_FILENAME, filemode='w', level=logging.ERROR)
+log_atualizador.basicConfig(filename=LOG_FILENAME, filemode='w', level=log_atualizador.ERROR)
 
 # TODO Talvez tenha que trazer o tom, caso haja diferencas entre os acordes e os acordes especificos do tom.
 
@@ -29,7 +29,7 @@ def normalizar_dados_cifras(registros):
             colecao.update({"_id": id}, {'$set': dictUpdate})
 
         except BaseException as exc:
-            logging.error("Erro ao processar o registro <%s>. Detalhes: %s..." % (id, exc))
+            log_atualizador.error("Erro ao processar o registro <%s>. Detalhes: %s..." % (id, exc))
 
 
 if __name__ == "__main__":
@@ -37,9 +37,10 @@ if __name__ == "__main__":
     # Inicializa o dicionario de acordes.
     carregar_dicionario_acordes()
 
-    query = {"$and": [{"acordes_unicos_cifraclub": {"$exists": 0}},
-                      {"seq_acordes_cifraclub": {'$exists': 1}},
-                      {"$where": "this.seq_acordes_cifraclub.length > 0"}]}
+    query = {"$and": [{"seq_acordes_cifraclub": {'$exists': 1}},
+                      {"$where": "this.seq_acordes_cifraclub.length > 0"},
+                      {"tonicas_cifraclub": {'$exists': 1}},
+                      {"$where": "this.tonicas_cifraclub.length == 0"}]}
 
     qtd_registros = colecao.find(query, {'_id': True}).count()
 
