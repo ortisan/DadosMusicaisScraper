@@ -2,6 +2,7 @@ _id
 artista
 nome
 estilo_cifraclub
+tom_cifraclub
 capo_cifraclub
 dt_insercao
 duracao_lastfm
@@ -16,7 +17,5 @@ qtd_gostei_youtube
 qtd_nao_gostei_youtube
 dt_publicacao_youtube
 dias_desde_publicacao_youtube
-tom_cifraclub
 cont_tonicas
 cont_baixos
-cont_modos
