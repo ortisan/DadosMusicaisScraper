@@ -17,7 +17,7 @@ def main(argv):
             cmdline.execute(('scrapy crawl ' + arg).split())
             break
     except getopt.GetoptError:
-        print 'Erro!\nUtilize o comando: main.py -s <nome do spider>'
+        print('Erro!\nUtilize o comando: main.py -s <nome do spider>')
         sys.exit(2)
 
 

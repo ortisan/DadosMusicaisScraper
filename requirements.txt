@@ -7,5 +7,5 @@ music21==2.0.0
 #matplotlib==1.4.2
 #scipy==0.15.1
 pylast==1.1.0
-spotipy=2.3.6
+spotipy==2.3.6
 

@@ -1,5 +1,5 @@
 //BACKUP DA BASE
-//mongodump -d scrapy_tcc --out /Users/marcelo/Documents/Ambiente/Projetos/Python/DadosMusicaisScraper/backup_bases/base_scrapy
+//mongodump -d scrapy_tcc --out /Users/marcelo/Documents/Ambiente/workspace-py/DadosMusicaisScraper/base_scrapy_antes_correcao_acordes_14_07
 //mongorestore --db scrapy_tcc_restore /Users/marcelo/Documents/Ambiente/Projetos/Python/DadosMusicaisScraper/backup_bases/base_scrapy_0607
 
 // Musicas que nao possuem acordes cifraclub
@@ -51,20 +51,30 @@ qtd_registros = db.musicas.find({"duracao_lastfm": {"$exists": 0}}, {
 
 
 db.dicionario_acordes.update(
-    {_id:{$exists: 1}},
-    {$set:{lista_notas: []}},
-    {multi:true}
+    {_id: {$exists: 1}},
+    {$set: {lista_notas: []}},
+    {multi: true}
 )
 
-db.dicionario_acordes.find({ $where: "this.lista_notas.length > 1" })
+db.dicionario_acordes.find({$where: "this.lista_notas.length > 1"})
 
 db.musicas.update(
-    {_id:{$exists: 1}},
-    {$set:{tonicas_cifraclub: [], acordes_unicos_cifraclub: [], baixos_cifraclub: [], modos_cifraclub: []}},
-    {multi:true}
+    {_id: {$exists: 1}},
+    {$set: {tonicas_cifraclub: [], acordes_unicos_cifraclub: [], baixos_cifraclub: [], modos_cifraclub: []}},
+    {multi: true}
 )
 
-db.musicas.find({ $where: "this.tonicas_cifraclub.length > 1" })
+// Limpar os acordes dando um trim()
+db.musicas.find({seq_acordes_cifraclub: {$exists: 1}}).forEach(function (document) {
+    var acordes_trim = [];
+    for (var i = 0; i < document.seq_acordes_cifraclub.length; i++) {
+        acordes_trim[i] = document.seq_acordes_cifraclub[i].trim();
+    }
+    db.musicas.update({_id: document._id}, {$set: {seq_acordes_cifraclub: acordes_trim}});
+});
+
+
+db.musicas.find({$where: "this.tonicas_cifraclub.length > 1"})
 
 /* ### Preparacao do dicionario de acordes ### */
 
@@ -92,6 +102,9 @@ db.musicas.aggregate(project, unwind).forEach(function (doc) {
     i++;
 });
 
+//mongoexport - d scrapy_tcc - c dicionario_acordes --type=csv --fieldFile./fields_dicionario_acordes.txt --out ./dicionario_acordes.csv
+
+
 /* ### FIM - Preparacao do dicionario de acordes ### */
 
 
@@ -100,8 +113,8 @@ db.musicas.aggregate(project, unwind).forEach(function (doc) {
 // Criacao da base ADB
 db.musicas_pre_adb.remove({});
 // Backup dos registros
-db.musicas.find({}).forEach(function(doc){
-   db.musicas_pre_adb.insert(doc);
+db.musicas.find({}).forEach(function (doc) {
+    db.musicas_pre_adb.insert(doc);
 });
 
 db.musicas_pre_adb.count()
@@ -133,7 +146,7 @@ db.musicas_pre_adb.aggregate(project, unwind).forEach(function (doc) {
 
 
 var map_modos = {};
-db.modos_acordes.find().forEach(function(doc){
+db.modos_acordes.find().forEach(function (doc) {
     map_modos[doc._id] = 0;
 });
 
@@ -184,82 +197,82 @@ var map_contadores = function () {
 
     // TODO Fazer os modos
     var map_modos = {
-        "major triad" : 0,
-        "minor triad" : 0,
-        "dominant seventh chord" : 0,
-        "major seventh chord" : 0,
-        "minor seventh chord" : 0,
-        "interval class 5" : 0,
-        "incomplete minor-seventh chord" : 0,
-        "quartal trichord" : 0,
-        "incomplete dominant-seventh chord" : 0,
-        "half-diminished seventh chord" : 0,
-        "diminished seventh chord" : 0,
-        "quartal tetramirror" : 0,
-        "major-second major tetrachord" : 0,
-        "perfect-fourth major tetrachord" : 0,
-        "lydian tetrachord" : 0,
-        "minor-diminished ninth chord" : 0,
-        "major-second minor tetrachord" : 0,
-        "whole-tone tetramirror" : 0,
-        "flat-ninth pentachord" : 0,
-        "augmented seventh chord" : 0,
-        "phrygian tetrachord" : 0,
-        "harmonic minor tetrachord" : 0,
-        "all-interval tetrachord" : 0,
-        "major-diminished tetrachord" : 0,
-        "Messiaen's truncated mode 6" : 0,
-        "major pentatonic" : 0,
-        "minor-augmented tetrachord" : 0,
-        "augmented triad" : 0,
-        "minor-second quartal tetrachord" : 0,
-        "major-ninth chord" : 0,
-        "major pentachord" : 0,
-        "minor-second diminished tetrachord" : 0,
-        "perfect-fourth minor tetrachord" : 0,
-        "tritone quartal tetrachord" : 0,
-        "center-cluster pentamirror" : 0,
-        "augmented major tetrachord" : 0,
-        "dominant-ninth" : 0,
-        "Neapolitan pentachord" : 0,
-        "major-minor tetramirror" : 0,
-        "diminished-augmented ninth chord" : 0,
-        "phrygian pentachord" : 0,
-        "Javanese pentatonic" : 0,
-        "perfect-fourth diminished tetrachord" : 0,
-        "whole-tone pentachord" : 0,
-        "Kumoi pentachord" : 0,
-        "diminished-major ninth chord" : 0,
-        "diminished triad" : 0,
-        "incomplete half-diminished seventh chord" : 0,
-        "minor-ninth chord" : 0,
-        "C all combinatorial (P6, I3, RI9)" : 0,
-        "augmented-sixth pentachord" : 0,
-        "alternating tetramirror" : 0,
-        "minor-major ninth chord" : 0,
-        "incomplete major-seventh chord" : 0,
-        "lydian pentachord" : 0,
-        "tritone-fourth" : 0,
-        "minor-diminished tetrachord" : 0,
-        "dorian pentachord" : 0,
-        "whole-tone trichord" : 0,
-        "dominant-eleventh" : 0,
-        "diminished pentacluster" : 0,
-        "enigmatic pentachord" : 0,
-        "augmented-diminished ninth chord" : 0,
-        "Balinese Pelog pentatonic" : 0,
-        "major-augmented ninth chord" : 0,
-        "combinatorial RI (RI1)" : 0,
-        "double-fourth tetramirror" : 0,
-        "diminished minor-ninth chord" : 0,
-        "major-minor diminished pentachord" : 0,
-        "phrygian hexamirror" : 0,
-        "Persian pentamirror" : 0,
-        "minor-seventh pentacluster" : 0,
-        "Lebanese pentachord" : 0,
-        "Hirajoshi pentatonic" : 0,
-        "locrian hexachord" : 0,
-        "minor hexachord" : 0
+        "major triad": 0,
+        "minor triad": 0,
+        "dominant seventh chord": 0,
+        "major seventh chord": 0,
+        "minor seventh chord": 0,
+        "interval class 5": 0,
+        "incomplete minor-seventh chord": 0,
+        "quartal trichord": 0,
+        "incomplete dominant-seventh chord": 0,
+        "half-diminished seventh chord": 0,
+        "diminished seventh chord": 0,
+        "quartal tetramirror": 0,
+        "major-second major tetrachord": 0,
+        "perfect-fourth major tetrachord": 0,
+        "lydian tetrachord": 0,
+        "minor-diminished ninth chord": 0,
+        "major-second minor tetrachord": 0,
+        "whole-tone tetramirror": 0,
+        "flat-ninth pentachord": 0,
+        "augmented seventh chord": 0,
+        "phrygian tetrachord": 0,
+        "harmonic minor tetrachord": 0,
+        "all-interval tetrachord": 0,
+        "major-diminished tetrachord": 0,
+        "Messiaen's truncated mode 6": 0,
+        "major pentatonic": 0,
+        "minor-augmented tetrachord": 0,
+        "augmented triad": 0,
+        "minor-second quartal tetrachord": 0,
+        "major-ninth chord": 0,
+        "major pentachord": 0,
+        "minor-second diminished tetrachord": 0,
+        "perfect-fourth minor tetrachord": 0,
+        "tritone quartal tetrachord": 0,
+        "center-cluster pentamirror": 0,
+        "augmented major tetrachord": 0,
+        "dominant-ninth": 0,
+        "Neapolitan pentachord": 0,
+        "major-minor tetramirror": 0,
+        "diminished-augmented ninth chord": 0,
+        "phrygian pentachord": 0,
+        "Javanese pentatonic": 0,
+        "perfect-fourth diminished tetrachord": 0,
+        "whole-tone pentachord": 0,
+        "Kumoi pentachord": 0,
+        "diminished-major ninth chord": 0,
+        "diminished triad": 0,
+        "incomplete half-diminished seventh chord": 0,
+        "minor-ninth chord": 0,
+        "C all combinatorial (P6, I3, RI9)": 0,
+        "augmented-sixth pentachord": 0,
+        "alternating tetramirror": 0,
+        "minor-major ninth chord": 0,
+        "incomplete major-seventh chord": 0,
+        "lydian pentachord": 0,
+        "tritone-fourth": 0,
+        "minor-diminished tetrachord": 0,
+        "dorian pentachord": 0,
+        "whole-tone trichord": 0,
+        "dominant-eleventh": 0,
+        "diminished pentacluster": 0,
+        "enigmatic pentachord": 0,
+        "augmented-diminished ninth chord": 0,
+        "Balinese Pelog pentatonic": 0,
+        "major-augmented ninth chord": 0,
+        "combinatorial RI (RI1)": 0,
+        "double-fourth tetramirror": 0,
+        "diminished minor-ninth chord": 0,
+        "major-minor diminished pentachord": 0,
+        "phrygian hexamirror": 0,
+        "Persian pentamirror": 0,
+        "minor-seventh pentacluster": 0,
+        "Lebanese pentachord": 0,
+        "Hirajoshi pentatonic": 0,
+        "locrian hexachord": 0,
+        "minor hexachord": 0
     };
 
 
@@ -309,56 +322,300 @@ var reduce = function (key, values) {
     return values.length;
 };
 
-query_map_reduce = {"$and": [{"tonicas_cifraclub": {'$exists': 1}},
-                      {"$where": "this.tonicas_cifraclub.length > 0"}]}
+query_map_reduce = {
+    "$and": [{"tonicas_cifraclub": {'$exists': 1}},
+        {"$where": "this.tonicas_cifraclub.length > 0"}]
+}
 
 db.musicas_pre_adb.mapReduce(map_contadores, reduce, {query: query_map_reduce, out: "cont"});
 
-db.cont.find({}).forEach(function(doc){
-    db.musicas_pre_adb.update({_id: doc._id}, {$set: {cont_tonicas: doc.value.cont_tonicas, cont_baixos: doc.value.cont_baixos, cont_modos: doc.value.cont_modos}});
+// Atualizamos a colecao com as tonicas, os baixos e os modos.
+db.cont.find({}).forEach(function (doc) {
+    var fields_set = {};
+    var cont_tonicas = doc.value.cont_tonicas;
+    for (var field in cont_tonicas) {
+        var field_replace = field.replace(/\#/g, "sus");
+        var field_replace = field_replace.replace(/\-/g, "b");
+        fields_set["T_" + field_replace] = cont_tonicas[field];
+    }
+
+    var cont_baixos = doc.value.cont_baixos;
+    for (var field in cont_baixos) {
+        var field_replace = field.replace(/\#/g, "sus");
+        var field_replace = field_replace.replace(/\-/g, "b");
+        fields_set["B_" + field_replace] = cont_baixos[field];
+    }
+
+    var cont_modos = doc.value.cont_modos;
+    for (var field in cont_modos) {
+        var field_replace = field.replace(/(\W+)/g, "_");
+        fields_set["M_" + field_replace] = cont_modos[field];
+    }
+    db.musicas_pre_adb.update({_id: doc._id}, {$set: fields_set});
+});
+
+// Cria-se a variavel com a quantidade de acordes unicos
+db.musicas_pre_adb.find({acordes_unicos_cifraclub: {$exists: 1}}).forEach(function (document) {
+    var qtd_acordes_unicos_cifraclub = document.acordes_unicos_cifraclub.length;
+    db.musicas_pre_adb.update({_id: document._id}, {$set: {qtd_acordes_unicos_cifraclub: qtd_acordes_unicos_cifraclub}});
 });
 
 
-db.test.find({"url": { $regex: 'http:\/\/' }}).forEach(function(doc) {
-  doc.url = doc.url.replace(/http:\/\/www\.url\.com/g, 'http://another.url.com');
-  db.test.save(doc);
-});
-
-
-db.musicas_pre_adb.find({}).forEach(function(doc){
+db.musicas_pre_adb.find({}).forEach(function (doc) {
     var nome = doc.nome.replace(/,/g, '');
     var artista = doc.nome.replace(/,/g, '');
     var estilo_cifraclub = doc.nome.replace(/,/g, '');
 });
 
 
-
-
 // Obter os campos da tabela
 mr = db.runCommand({
-  "mapreduce" : "musicas_pre_adb",
-  "map" : function() {
-    for (var key in this) { emit(key, null); }
-  },
-  "reduce" : function(key, stuff) { return null; },
-  "out": "musicas_pre_adb" + "_keys"
+    "mapreduce": "musicas_pre_adb",
+    "map": function () {
+        for (var key in this) {
+            emit(key, null);
+        }
+    },
+    "reduce": function (key, stuff) {
+        return null;
+    },
+    "out": "musicas_pre_adb" + "_keys"
 })
 
 db[mr.result].distinct("_id")
 
 //COLAR NO ARQUIVO fields.txt E REMOVER COM O REGEX DAS LINHAS AS ASPAS E O VIRG. "|,
 
-{$and: [{tonicas_cifraclub: {$exists: 1}},{$where: this.tonicas_cifraclub.length > 0}]}
-
-
+{
+    $and: [{tonicas_cifraclub: {$exists: 1}}, {$where: this.tonicas_cifraclub.length > 0}]
+}
 
 
 //mongoexport -d scrapy_tcc -c musicas_pre_adb --type=csv --query '{"tonicas_cifraclub": {"$exists": "1"}, "$where": "this.tonicas_cifraclub.length > 0"}' --fieldFile ./fields.txt --out ./base_adb5.csv
 //mongoexport -d scrapy_tcc -c musicas_pre_adb --query '{"tonicas_cifraclub": {"$exists": "1"}, "$where": "this.tonicas_cifraclub.length > 0"}' --fieldFile ./fields.txt --out ./base_adb1.json --jsonArray
 
 
-"{""A"":0,""A#"":0,""A-"":0,""B"":0,""B-"":1,""C"":2,""C#"":0,""D"":1,""D#"":1,""D-"":0,""E"":0,""E-"":0,""F"":1,""F#"":0,""G"":1,""G#"":0,""G-"":0}","{""A"":0,""A#"":0,""A-"":0,""B"":0,""B-"":1,""C"":2,""C#"":0,""D"":1,""D#"":1,""D-"":0,""E"":0,""E-"":0,""F"":1,""F#"":0,""G"":1,""G#"":0,""G-"":0}","{""Balinese Pelog pentatonic"":0,""C all combinatorial (P6, I3, RI9)"":0,""Hirajoshi pentatonic"":0,""Javanese pentatonic"":0,""Kumoi pentachord"":0,""Lebanese pentachord"":0,""Messiaen's truncated mode 6"":0,""Neapolitan pentachord"":0,""Persian pentamirror"":0,""all-interval tetrachord"":0,""alternating tetramirror"":0,""augmented major tetrachord"":0,""augmented seventh chord"":0,""augmented triad"":0,""augmented-diminished ninth chord"":0,""augmented-sixth pentachord"":0,""center-cluster pentamirror"":0,""combinatorial RI (RI1)"":0,""diminished minor-ninth chord"":0,""diminished pentacluster"":0,""diminished seventh chord"":0,""diminished triad"":0,""diminished-augmented ninth chord"":0,""diminished-major ninth chord"":0,""dominant seventh chord"":0,""dominant-eleventh"":0,""dominant-ninth"":0,""dorian pentachord"":0,""double-fourth tetramirror"":0,""enigmatic pentachord"":0,""flat-ninth pentachord"":0,""half-diminished seventh chord"":0,""harmonic minor tetrachord"":0,""incomplete dominant-seventh chord"":0,""incomplete half-diminished seventh chord"":0,""incomplete major-seventh chord"":0,""incomplete minor-seventh chord"":0,""interval class 5"":0,""locrian hexachord"":0,""lydian pentachord"":0,""lydian tetrachord"":0,""major pentachord"":0,""major pentatonic"":0,""major seventh chord"":0,""major triad"":5,""major-augmented ninth chord"":0,""major-diminished tetrachord"":0,""major-minor diminished pentachord"":0,""major-minor tetramirror"":0,""major-ninth chord"":0,""major-second major tetrachord"":0,""major-second minor tetrachord"":0,""minor hexachord"":0,""minor seventh chord"":0,""minor triad"":2,""minor-augmented tetrachord"":0,""minor-diminished ninth chord"":0,""minor-diminished tetrachord"":0,""minor-major ninth chord"":0,""minor-ninth chord"":0,""minor-second diminished tetrachord"":0,""minor-second quartal tetrachord"":0,""minor-seventh pentacluster"":0,""perfect-fourth diminished tetrachord"":0,""perfect-fourth major tetrachord"":0,""perfect-fourth minor tetrachord"":0,""phrygian hexamirror"":0,""phrygian pentachord"":0,""phrygian tetrachord"":0,""quartal tetramirror"":0,""quartal trichord"":0,""tritone quartal tetrachord"":0,""tritone-fourth"":0,""whole-tone pentachord"":0,""whole-tone tetramirror"":0,""whole-tone trichord"":0}"
-
+"{"
+"A"
+":0,"
+"A#"
+":0,"
+"A-"
+":0,"
+"B"
+":0,"
+"B-"
+":1,"
+"C"
+":2,"
+"C#"
+":0,"
+"D"
+":1,"
+"D#"
+":1,"
+"D-"
+":0,"
+"E"
+":0,"
+"E-"
+":0,"
+"F"
+":1,"
+"F#"
+":0,"
+"G"
+":1,"
+"G#"
+":0,"
+"G-"
+":0}", "{"
+"A"
+":0,"
+"A#"
+":0,"
+"A-"
+":0,"
+"B"
+":0,"
+"B-"
+":1,"
+"C"
+":2,"
+"C#"
+":0,"
+"D"
+":1,"
+"D#"
+":1,"
+"D-"
+":0,"
+"E"
+":0,"
+"E-"
+":0,"
+"F"
+":1,"
+"F#"
+":0,"
+"G"
+":1,"
+"G#"
+":0,"
+"G-"
+":0}", "{"
+"Balinese Pelog pentatonic"
+":0,"
+"C all combinatorial (P6, I3, RI9)"
+":0,"
+"Hirajoshi pentatonic"
+":0,"
+"Javanese pentatonic"
+":0,"
+"Kumoi pentachord"
+":0,"
+"Lebanese pentachord"
+":0,"
+"Messiaen's truncated mode 6"
+":0,"
+"Neapolitan pentachord"
+":0,"
+"Persian pentamirror"
+":0,"
+"all-interval tetrachord"
+":0,"
+"alternating tetramirror"
+":0,"
+"augmented major tetrachord"
+":0,"
+"augmented seventh chord"
+":0,"
+"augmented triad"
+":0,"
+"augmented-diminished ninth chord"
+":0,"
+"augmented-sixth pentachord"
+":0,"
+"center-cluster pentamirror"
+":0,"
+"combinatorial RI (RI1)"
+":0,"
+"diminished minor-ninth chord"
+":0,"
+"diminished pentacluster"
+":0,"
+"diminished seventh chord"
+":0,"
+"diminished triad"
+":0,"
+"diminished-augmented ninth chord"
+":0,"
+"diminished-major ninth chord"
+":0,"
+"dominant seventh chord"
+":0,"
+"dominant-eleventh"
+":0,"
+"dominant-ninth"
+":0,"
+"dorian pentachord"
+":0,"
+"double-fourth tetramirror"
+":0,"
+"enigmatic pentachord"
+":0,"
+"flat-ninth pentachord"
+":0,"
+"half-diminished seventh chord"
+":0,"
+"harmonic minor tetrachord"
+":0,"
+"incomplete dominant-seventh chord"
+":0,"
+"incomplete half-diminished seventh chord"
+":0,"
+"incomplete major-seventh chord"
+":0,"
+"incomplete minor-seventh chord"
+":0,"
+"interval class 5"
+":0,"
+"locrian hexachord"
+":0,"
+"lydian pentachord"
+":0,"
+"lydian tetrachord"
+":0,"
+"major pentachord"
+":0,"
+"major pentatonic"
+":0,"
+"major seventh chord"
+":0,"
+"major triad"
+":5,"
+"major-augmented ninth chord"
+":0,"
+"major-diminished tetrachord"
+":0,"
+"major-minor diminished pentachord"
+":0,"
+"major-minor tetramirror"
+":0,"
+"major-ninth chord"
+":0,"
+"major-second major tetrachord"
+":0,"
+"major-second minor tetrachord"
+":0,"
+"minor hexachord"
+":0,"
+"minor seventh chord"
+":0,"
+"minor triad"
+":2,"
+"minor-augmented tetrachord"
+":0,"
+"minor-diminished ninth chord"
+":0,"
+"minor-diminished tetrachord"
+":0,"
+"minor-major ninth chord"
+":0,"
+"minor-ninth chord"
+":0,"
+"minor-second diminished tetrachord"
+":0,"
+"minor-second quartal tetrachord"
+":0,"
+"minor-seventh pentacluster"
+":0,"
+"perfect-fourth diminished tetrachord"
+":0,"
+"perfect-fourth major tetrachord"
+":0,"
+"perfect-fourth minor tetrachord"
+":0,"
+"phrygian hexamirror"
+":0,"
+"phrygian pentachord"
+":0,"
+"phrygian tetrachord"
+":0,"
+"quartal tetramirror"
+":0,"
+"quartal trichord"
+":0,"
+"tritone quartal tetrachord"
+":0,"
+"tritone-fourth"
+":0,"
+"whole-tone pentachord"
+":0,"
+"whole-tone tetramirror"
+":0,"
+"whole-tone trichord"
+":0}"
 
 
 // TODO PREPARAR UMA BASE PARA A ANALISE DE ASSOCIACAO
@@ -371,7 +628,7 @@ db[mr.result].distinct("_id")
 //  Normalizo as strings dos modos
 //  [^a-z1-9\,]
 
-M_balinese_pelog_pentatonic,M_c_all_combinatorial_p6_i3_ri9,M_hirajoshi_pentatonic,M_javanese_pentatonic,M_kumoi_pentachord,M_lebanese_pentachord,M_messiaen_s_truncated_mode_6,M_neapolitan_pentachord,M_persian_pentamirror,M_all_interval_tetrachord,M_alternating_tetramirror,M_augmented_major_tetrachord,M_augmented_seventh_chord,M_augmented_triad,M_augmented_diminished_ninth_chord,M_augmented_sixth_pentachord,M_center_cluster_pentamirror,M_combinatorial_ri_ri1,M_diminished_minor_ninth_chord,M_diminished_pentacluster,M_diminished_seventh_chord,M_diminished_triad,M_diminished_augmented_ninth_chord,M_diminished_major_ninth_chord,M_dominant_seventh_chord,M_dominant_eleventh,M_dominant_ninth,M_dorian_pentachord,M_double_fourth_tetramirror,M_enigmatic_pentachord,M_flat_ninth_pentachord,M_half_diminished_seventh_chord,M_harmonic_minor_tetrachord,M_incomplete_dominant_seventh_chord,M_incomplete_half_diminished_seventh_chord,M_incomplete_major_seventh_chord,M_incomplete_minor_seventh_chord,M_interval_class_5,M_locrian_hexachord,M_lydian_pentachord,M_lydian_tetrachord,M_major_pentachord,M_major_pentatonic,M_major_seventh_chord,M_major_triad,M_major_augmented_ninth_chord,M_major_diminished_tetrachord,M_major_minor_diminished_pentachord,M_major_minor_tetramirror,M_major_ninth_chord,M_major_second_major_tetrachord,M_major_second_minor_tetrachord,M_minor_hexachord,M_minor_seventh_chord,M_minor_triad,M_minor_augmented_tetrachord,M_minor_diminished_ninth_chord,M_minor_diminished_tetrachord,M_minor_major_ninth_chord,M_minor_ninth_chord,M_minor_second_diminished_tetrachord,M_minor_second_quartal_tetrachord,M_minor_seventh_pentacluster,M_perfect_fourth_diminished_tetrachord,M_perfect_fourth_major_tetrachord,M_perfect_fourth_minor_tetrachord,M_phrygian_hexamirror,M_phrygian_pentachord,M_phrygian_tetrachord,M_quartal_tetramirror,M_quartal_trichord,M_tritone_quartal_tetrachord,M_tritone_fourth,M_whole_tone_pentachord,M_whole_tone_tetramirror,M_whole_tone_trichord
+M_balinese_pelog_pentatonic, M_c_all_combinatorial_p6_i3_ri9, M_hirajoshi_pentatonic, M_javanese_pentatonic, M_kumoi_pentachord, M_lebanese_pentachord, M_messiaen_s_truncated_mode_6, M_neapolitan_pentachord, M_persian_pentamirror, M_all_interval_tetrachord, M_alternating_tetramirror, M_augmented_major_tetrachord, M_augmented_seventh_chord, M_augmented_triad, M_augmented_diminished_ninth_chord, M_augmented_sixth_pentachord, M_center_cluster_pentamirror, M_combinatorial_ri_ri1, M_diminished_minor_ninth_chord, M_diminished_pentacluster, M_diminished_seventh_chord, M_diminished_triad, M_diminished_augmented_ninth_chord, M_diminished_major_ninth_chord, M_dominant_seventh_chord, M_dominant_eleventh, M_dominant_ninth, M_dorian_pentachord, M_double_fourth_tetramirror, M_enigmatic_pentachord, M_flat_ninth_pentachord, M_half_diminished_seventh_chord, M_harmonic_minor_tetrachord, M_incomplete_dominant_seventh_chord, M_incomplete_half_diminished_seventh_chord, M_incomplete_major_seventh_chord, M_incomplete_minor_seventh_chord, M_interval_class_5, M_locrian_hexachord, M_lydian_pentachord, M_lydian_tetrachord, M_major_pentachord, M_major_pentatonic, M_major_seventh_chord, M_major_triad, M_major_augmented_ninth_chord, M_major_diminished_tetrachord, M_major_minor_diminished_pentachord, M_major_minor_tetramirror, M_major_ninth_chord, M_major_second_major_tetrachord, M_major_second_minor_tetrachord, M_minor_hexachord, M_minor_seventh_chord, M_minor_triad, M_minor_augmented_tetrachord, M_minor_diminished_ninth_chord, M_minor_diminished_tetrachord, M_minor_major_ninth_chord, M_minor_ninth_chord, M_minor_second_diminished_tetrachord, M_minor_second_quartal_tetrachord, M_minor_seventh_pentacluster, M_perfect_fourth_diminished_tetrachord, M_perfect_fourth_major_tetrachord, M_perfect_fourth_minor_tetrachord, M_phrygian_hexamirror, M_phrygian_pentachord, M_phrygian_tetrachord, M_quartal_tetramirror, M_quartal_trichord, M_tritone_quartal_tetrachord, M_tritone_fourth, M_whole_tone_pentachord, M_whole_tone_tetramirror, M_whole_tone_trichord
 
 
 //  T_A,T_A#,T_A-,T_B,T_B-,T_C,T_C#,T_D,T_D#,T_D-,T_E,  T_E-,T_F,T_F#,T_G,T_G#,T_G-,B_A,B_A#,B_A-,B_B,B_B-,B_C,B_C#,B_D,B_D#,B_D-,B_E,B_E-,B_F,B_F#,B_G,B_G#,B_G-
@@ -379,32 +636,48 @@ M_balinese_pelog_pentatonic,M_c_all_combinatorial_p6_i3_ri9,M_hirajoshi_pentaton
 //  T_A,T_A#,T_A-,T_B,T_B-,T_C,T_C#,T_D,T_D#,T_D-,T_E,T_E-,T_F,T_F#,T_G,T_G#,T_G-,B_A,B_A#,B_A-,B_B,B_B-,B_C,B_C#,B_D,B_D#,B_D-,B_E,B_E-,B_F,B_F#,B_G,B_G#,B_G-,M_balinese_pelog_pentatonic,M_c_all_combinatorial_p6_i3_ri9,M_hirajoshi_pentatonic,M_javanese_pentatonic,M_kumoi_pentachord,M_lebanese_pentachord,M_messiaen_s_truncated_mode_6,M_neapolitan_pentachord,M_persian_pentamirror,M_all_interval_tetrachord,M_alternating_tetramirror,M_augmented_major_tetrachord,M_augmented_seventh_chord,M_augmented_triad,M_augmented_diminished_ninth_chord,M_augmented_sixth_pentachord,M_center_cluster_pentamirror,M_combinatorial_ri_ri1,M_diminished_minor_ninth_chord,M_diminished_pentacluster,M_diminished_seventh_chord,M_diminished_triad,M_diminished_augmented_ninth_chord,M_diminished_major_ninth_chord,M_dominant_seventh_chord,M_dominant_eleventh,M_dominant_ninth,M_dorian_pentachord,M_double_fourth_tetramirror,M_enigmatic_pentachord,M_flat_ninth_pentachord,M_half_diminished_seventh_chord,M_harmonic_minor_tetrachord,M_incomplete_dominant_seventh_chord,M_incomplete_half_diminished_seventh_chord,M_incomplete_major_seventh_chord,M_incomplete_minor_seventh_chord,M_interval_class_5,M_locrian_hexachord,M_lydian_pentachord,M_lydian_tetrachord,M_major_pentachord,M_major_pentatonic,M_major_seventh_chord,M_major_triad,M_major_augmented_ninth_chord,M_major_diminished_tetrachord,M_major_minor_diminished_pentachord,M_major_minor_tetramirror,M_major_ninth_chord,M_major_second_major_tetrachord,M_major_second_minor_tetrachord,M_minor_hexachord,M_minor_seventh_chord,M_minor_triad,M_minor_augmented_tetrachord,M_minor_diminished_ninth_chord,M_minor_diminished_tetrachord,M_minor_major_ninth_chord,M_minor_ninth_chord,M_minor_second_diminished_tetrachord,M_minor_second_quartal_tetrachord,M_minor_seventh_pentacluster,M_perfect_fourth_diminished_tetrachord,M_perfect_fourth_major_tetrachord,M_perfect_fourth_minor_tetrachord,M_phrygian_hexamirror,M_phrygian_pentachord,M_phrygian_tetrachord,M_quartal_tetramirror,M_quartal_trichord,M_tritone_quartal_tetrachord,M_tritone_fourth,M_whole_tone_pentachord,M_whole_tone_tetramirror,M_whole_tone_trichord
 
 
-
 //_id,artista,nome,estilo_cifraclub,tom_cifraclub,capo_cifraclub,dt_insercao,duracao_lastfm,qtd_audicoes_lastfm,duracao_spotify,popularidade_spotify,possui_capo_cifraclub,possui_tabs_cifraclub,qtd_exibicoes_cifraclub,qtd_exibicoes_youtube,qtd_gostei_youtube,qtd_nao_gostei_youtube,dt_publicacao_youtube,dias_desde_publicacao_youtube,cont_tonicas,cont_baixos,cont_modos
-
 
 
 // NAS LINHAS USO O REGEX (\"{2})(.{1,}?)(\"{2})\:(\d+\.\d+) SUBSTITUINDO O $4
 
 
-
 db.musicas_pre_adb.aggregate([{
-    $project : {
-        _id : 0,
-        cont_tonicas : 1,
-        cont_modos : 1
+    $project: {
+        _id: 0,
+        cont_tonicas: 1,
+        cont_modos: 1
     }
 }, {
-    $unwind : "cont_tonicas"
+    $unwind: "cont_tonicas"
 }, {
-    $out : "forcsv"
-} ]);
+    $out: "forcsv"
+}]);
 
 
-T_A,T_Asus,T_Ab,T_B,T_Bb,T_C,T_Csus,T_D,T_Dsus,T_Db,T_E,T_Eb,T_F,T_Fsus,T_G,T_Gsus,T_Gb,B_A,B_Asus,B_Ab,B_B,B_Bb,B_C,B_Csus,B_D,B_Dsus,B_Db,B_E,B_Eb,B_F,B_Fsus,B_G,B_Gsus,B_Gb
-
+T_A, T_Asus, T_Ab, T_B, T_Bb, T_C, T_Csus, T_D, T_Dsus, T_Db, T_E, T_Eb, T_F, T_Fsus, T_G, T_Gsus, T_Gb, B_A, B_Asus, B_Ab, B_B, B_Bb, B_C, B_Csus, B_D, B_Dsus, B_Db, B_E, B_Eb, B_F, B_Fsus, B_G, B_Gsus, B_Gb
 
 
 /* ### FIM - Preparacao da base ### */
+
+
+
+// TODO:
+
+Remover
+espacos
+dos
+acordes
+Criar
+variavel
+para
+saber as inversoes
+Criar
+variavel
+para
+saber as cadencias
+
+
+
 
 
