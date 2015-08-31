@@ -1,6 +1,7 @@
 //BACKUP DA BASE
 //mongodump -d scrapy_tcc --out /Users/marcelo/Documents/Ambiente/workspace-py/DadosMusicaisScraper/base_scrapy_antes_correcao_acordes_14_07
 //mongorestore --db scrapy_tcc_restore /Users/marcelo/Documents/Ambiente/Projetos/Python/DadosMusicaisScraper/backup_bases/base_scrapy_0607
+//mongodump -d scrapy_tcc --out /Users/marcelo/Documents/Ambiente/workspace-py/DadosMusicaisScraper/backup_bases/base_scrapy_estilos_tons_separados_30_08
 
 // Musicas que nao possuem acordes cifraclub
 db.musicas.find({$where: "this.seq_acordes_cifraclub.length > 0"});
@@ -368,6 +369,119 @@ db.musicas_pre_adb.find({}).forEach(function (doc) {
 });
 
 
+// Separo os estilos de acordo com a coluna
+function remover_caracteres_invalidos(valor) {
+  var string = valor;
+	var mapaAcentosHex = {
+        a : /[\xE0-\xE6]/g,
+        A : /[\xC0-\xC6]/g,
+        e : /[\xE8-\xEB]/g,
+        E : /[\xC8-\xCB]/g,
+        i : /[\xEC-\xEF]/g,
+        I : /[\xCC-\xCF]/g,
+        o : /[\xF2-\xF6]/g,
+        O : /[\xD2-\xD6]/g,
+        u : /[\xF9-\xFC]/g,
+        U : /[\xD9-\xDC]/g,
+        c : /\xE7/g,
+        C : /\xC7/g,
+        n : /\xF1/g,
+        N : /\xD1/g,
+        _e_ : /\&/g,
+        sus : /\#/g,
+        _ : /\W/g,
+	};
+
+	for (var letra in mapaAcentosHex) {
+            var expressaoRegular = mapaAcentosHex[letra];
+            string = string.replace(expressaoRegular, letra);
+	}
+    return string.toLowerCase();
+}
+
+var estilos = [];
+var tons = [];
+db.musicas_pre_adb.find({}, {_id: 1, estilo_cifraclub: 1, tom_cifraclub:1}).forEach(function (doc) {
+    var estilo_normalizado = remover_caracteres_invalidos(doc.estilo_cifraclub);
+    if (estilos.indexOf(estilo_normalizado) < 0) {
+        estilos.push(estilo_normalizado);
+    }
+
+    print(doc._id + doc.tom_cifraclub);
+
+    var tom_normalizado = remover_caracteres_invalidos(doc.tom_cifraclub);
+    tom_normalizado = tom_normalizado.toUpperCase();
+    tom_normalizado = tom_normalizado.replace('SUS', 'sus');
+    if (tons.indexOf(tom_normalizado) < 0) {
+        tons.push(tom_normalizado);
+    }
+});
+
+estilos = estilos.sort();
+tons = tons.sort();
+
+var map_estilos = {};
+for (var i = 0; i < estilos.length; i++) {
+    map_estilos['E_' + estilos[i]] = 0;
+}
+
+var map_tons = {};
+for (var i = 0; i < tons.length; i++) {
+    map_tons['TOM_' + tons[i]] = 0;
+}
+
+db.musicas_pre_adb.update(
+    {_id: {$exists: 1}},
+    {$set: map_estilos},
+    {multi: true}
+)
+
+db.musicas_pre_adb.update(
+    {_id: {$exists: 1}},
+    {$set: map_tons},
+    {multi: true}
+)
+
+db.musicas_pre_adb.find({}, {_id: 1, estilo_cifraclub: 1, tom_cifraclub:1}).forEach(function(doc) {
+    var estilo_normalizado = remover_caracteres_invalidos(doc.estilo_cifraclub);
+    var tom_normalizado = remover_caracteres_invalidos(doc.tom_cifraclub);
+    tom_normalizado = tom_normalizado.toUpperCase();
+    tom_normalizado = tom_normalizado.replace('SUS', 'sus');
+
+    var map_estilos_tons = {};
+    map_estilos_tons['E_' + estilo_normalizado] = 1;
+    map_estilos_tons['TOM_' + tom_normalizado] = 1;
+
+    db.musicas_pre_adb.update(
+        {_id: doc._id},
+        {$set: map_estilos_tons},
+        {multi: true}
+    )
+});
+
+
+// Base para cesto de compras
+db.musicas_basket.remove({});
+db.musicas_pre_adb.find({tonicas_cifraclub: {$exists: 1}, $where: "this.tonicas_cifraclub.length > 0", qtd_exibicoes_youtube: {$exists:1}, dias_desde_publicacao_youtube: {$exists:1}}).forEach(function(doc){
+        for (var i = 0; i < doc.seq_acordes_cifraclub.length; i++) {
+        var acorde = doc.seq_acordes_cifraclub[i];
+        var id = doc._id + "_" + acorde;
+        db.musicas_basket.update(
+                { _id: id },
+                {
+                    id_musica: doc._id,
+                    acorde: acorde,
+                    tom_cifraclub: doc.tom_cifraclub,
+                    qtd_exibicoes_youtube: doc.qtd_exibicoes_youtube,
+                    dias_desde_publicacao_youtube: doc.dias_desde_publicacao_youtube
+                },
+                { upsert: true }
+        );
+    }
+
+});
+
+
 // Obter os campos da tabela
 mr = db.runCommand({
     "mapreduce": "musicas_pre_adb",
@@ -384,6 +498,23 @@ mr = db.runCommand({
 
 db[mr.result].distinct("_id")
 
+
+// Obter os campos da colecao basket
+mr = db.runCommand({
+    "mapreduce": "musicas_basket",
+    "map": function () {
+        for (var key in this) {
+            emit(key, null);
+        }
+    },
+    "reduce": function (key, stuff) {
+        return null;
+    },
+    "out": "musicas_basket" + "_keys"
+})
+
+db[mr.result].distinct("_id")
+
 //COLAR NO ARQUIVO fields.txt E REMOVER COM O REGEX DAS LINHAS AS ASPAS E O VIRG. "|,
 
 {
@@ -393,7 +524,22 @@ db[mr.result].distinct("_id")
 
 //mongoexport -d scrapy_tcc -c musicas_pre_adb --type=csv --query '{"tonicas_cifraclub": {"$exists": "1"}, "$where": "this.tonicas_cifraclub.length > 0"}' --fieldFile ./fields.txt --out ./base_adb5.csv
 //mongoexport -d scrapy_tcc -c musicas_pre_adb --query '{"tonicas_cifraclub": {"$exists": "1"}, "$where": "this.tonicas_cifraclub.length > 0"}' --fieldFile ./fields.txt --out ./base_adb1.json --jsonArray
+//mongoexport -d scrapy_tcc -c musicas_pre_adb --type=csv --query '{"tonicas_cifraclub": {"$exists": "1"}, "$where": "this.tonicas_cifraclub.length > 0"}' --fieldFile ./fields.txt --out ./base_adb.csv
+//EXPORTACAO BASE CESTO DE COMPRAS
+//mongoexport -d scrapy_tcc -c musicas_basket --type=csv --fieldFile ./fields_basket.txt --out ./base_basket.csv
 
+// ENCONTRA OS ACORDES DE ACORDO COM SEU DESENHO
+dict_dicionario = {};
+
+db.dicionario_acordes.find({foi_sucesso:true}).forEach(function(doc){
+    var desenho_acorde = doc.desenho_acorde;
+    var acorde = doc._id;
+    if (!dict_dicionario[desenho_acorde])
+        dict_dicionario[desenho_acorde] = [];
+    dict_dicionario[desenho_acorde].push(acorde);
+});
+
+dict_dicionario
 
 "{"
 "A"
@@ -676,6 +822,9 @@ Criar
 variavel
 para
 saber as cadencias
+
+
+
 
 
 

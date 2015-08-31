@@ -89,7 +89,6 @@ def obter_acorde21_desenho_listanotas_idxnotas(acorde_str, desenho_acorde_str=No
 
             # Atualizo o cache
             acordes_cache[acorde_str] = acorde
-            acorde.commonName
             desenhos_acordes_cache[acorde_str] = acorde_str
             idx_notas_acordes_cache[acorde_str] = lista_idx_notas
             notas_acordes_cache[acorde_str] = lista_notas

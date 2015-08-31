@@ -1,0 +1,6 @@
+_id
+acorde
+dias_desde_publicacao_youtube
+id_musica
+qtd_exibicoes_youtube
+tom_cifraclub
