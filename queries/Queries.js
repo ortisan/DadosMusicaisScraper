@@ -401,13 +401,15 @@ function remover_caracteres_invalidos(valor) {
 
 var estilos = [];
 var tons = [];
-db.musicas_pre_adb.find({}, {_id: 1, estilo_cifraclub: 1, tom_cifraclub:1}).forEach(function (doc) {
+var query = {estilo_cifraclub: {$exists: true, $nin: [null]}, tom_cifraclub: {$exists:true, $nin: [null]}};
+var fields = {_id: 1, estilo_cifraclub: 1, tom_cifraclub:1};
+db.musicas_pre_adb.find(query, fields).forEach(function (doc) {
     var estilo_normalizado = remover_caracteres_invalidos(doc.estilo_cifraclub);
     if (estilos.indexOf(estilo_normalizado) < 0) {
         estilos.push(estilo_normalizado);
     }
 
-    print(doc._id + doc.tom_cifraclub);
+    print(doc._d + doc.tom_cifraclub);
 
     var tom_normalizado = remover_caracteres_invalidos(doc.tom_cifraclub);
     tom_normalizado = tom_normalizado.toUpperCase();
@@ -442,7 +444,9 @@ db.musicas_pre_adb.update(
     {multi: true}
 )
 
-db.musicas_pre_adb.find({}, {_id: 1, estilo_cifraclub: 1, tom_cifraclub:1}).forEach(function(doc) {
+var query = {estilo_cifraclub: {$exists: true, $nin: [null]}, tom_cifraclub: {$exists:true, $nin: [null]}};
+var fields = {_id: 1, estilo_cifraclub: 1, tom_cifraclub:1};
+db.musicas_pre_adb.find(query, fields).forEach(function(doc) {
     var estilo_normalizado = remover_caracteres_invalidos(doc.estilo_cifraclub);
     var tom_normalizado = remover_caracteres_invalidos(doc.tom_cifraclub);
     tom_normalizado = tom_normalizado.toUpperCase();
@@ -525,6 +529,7 @@ db[mr.result].distinct("_id")
 //mongoexport -d scrapy_tcc -c musicas_pre_adb --type=csv --query '{"tonicas_cifraclub": {"$exists": "1"}, "$where": "this.tonicas_cifraclub.length > 0"}' --fieldFile ./fields.txt --out ./base_adb5.csv
 //mongoexport -d scrapy_tcc -c musicas_pre_adb --query '{"tonicas_cifraclub": {"$exists": "1"}, "$where": "this.tonicas_cifraclub.length > 0"}' --fieldFile ./fields.txt --out ./base_adb1.json --jsonArray
 //mongoexport -d scrapy_tcc -c musicas_pre_adb --type=csv --query '{"tonicas_cifraclub": {"$exists": "1"}, "$where": "this.tonicas_cifraclub.length > 0"}' --fieldFile ./fields.txt --out ./base_adb.csv
+//mongoexport -d scrapy_tcc -c musicas_pre_adb --type=csv --query '{"tonicas_cifraclub": {"$exists": "1"}, "$where": "this.tonicas_cifraclub.length > 0"}' --fieldFile ./fields.txt --out ./base_adb0831.csv
 //EXPORTACAO BASE CESTO DE COMPRAS
 //mongoexport -d scrapy_tcc -c musicas_basket --type=csv --fieldFile ./fields_basket.txt --out ./base_basket.csv
 
