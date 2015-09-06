@@ -368,6 +368,20 @@ db.musicas_pre_adb.find({}).forEach(function (doc) {
     var estilo_cifraclub = doc.nome.replace(/,/g, '');
 });
 
+// media de visualizacoes
+db.musicas_pre_adb.find({qtd_exibicoes_youtube: {$exists:1}, dias_desde_publicacao_youtube: {$exists:1}}).forEach(function (doc) {
+    var qtd_exibicoes = doc.qtd_exibicoes_youtube;
+    var qtd_dias = doc.dias_desde_publicacao_youtube;
+    var media = qtd_exibicoes / qtd_dias;
+    var dict_update = {calc_media_exibicoes_dia_youtube_1: media};
+
+    db.musicas_pre_adb.update(
+        {_id: doc._id},
+        {$set: dict_update},
+        {multi: true}
+    )
+});
+
 
 // Separo os estilos de acordo com a coluna
 function remover_caracteres_invalidos(valor) {
@@ -809,7 +823,27 @@ db.musicas_pre_adb.aggregate([{
 T_A, T_Asus, T_Ab, T_B, T_Bb, T_C, T_Csus, T_D, T_Dsus, T_Db, T_E, T_Eb, T_F, T_Fsus, T_G, T_Gsus, T_Gb, B_A, B_Asus, B_Ab, B_B, B_Bb, B_C, B_Csus, B_D, B_Dsus, B_Db, B_E, B_Eb, B_F, B_Fsus, B_G, B_Gsus, B_Gb
 
 
+
+
+
+// PREPARACAO DA BASE DE SNA
+
+
+{calc_media_exibicoes_dia_youtube_1: {$gt:65}}
+
+
+//mongoexport -d scrapy_tcc -c musicas_pre_adb --type=csv --query '{"seq_acordes_cifraclub": {"$exists": "1"}, "$where": "this.seq_acordes_cifraclub.length > 0", "calc_media_exibicoes_dia_youtube_1": {"$gt": 65}}' --fieldFile ./fields_sna.txt --out ./base_sna_pop.csv
+//mongoexport -d scrapy_tcc -c musicas_pre_adb --type=csv --query '{"seq_acordes_cifraclub": {"$exists": "1"}, "$where": "this.seq_acordes_cifraclub.length > 0", "calc_media_exibicoes_dia_youtube_1": {"$lt": 65}}' --fieldFile ./fields_sna.txt --out ./base_sna_impop.csv
+
+
+
+
 /* ### FIM - Preparacao da base ### */
+
+
+
+
+
 
 
 

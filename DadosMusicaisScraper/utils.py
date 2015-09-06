@@ -41,9 +41,9 @@ def obter_valor_default(valor, valor_default):
     return retorno
 
 
-def obter_acorde_music21(acorde_str, capo=0):
+def obter_acorde_music21(acorde_str, capo=0, buscar_externamente=True):
     acorde = acordes_cache.get(acorde_str)
-    if acorde == None:
+    if acorde == None and buscar_externamente:
         acorde, desenho_acorde_str, lista_idx_notas, lista_notas, flag_sucesso, msg = obter_acorde21_desenho_listanotas_idxnotas(
             acorde_str)
 
@@ -119,9 +119,25 @@ def obter_lista_idx_notas(desenho_acorde, escala=notas_escala_sus):
 
 
 def obter_acorde21(acorde_str, lista_notas):
-    acorde = chord.Chord(lista_notas)
+    from music21 import pitch
+
+    piches = [pitch.Pitch(nota) for nota in lista_notas]
+    acorde = chord.Chord(piches)
+
     # TODO Talvez um acorde tenha tonica C e uma nota C#. Pode dar problema
-    tonica = [nota for nota in lista_notas if nota[0] == acorde_str[0]][0]
+    possiveis_tonicas = [nota for nota in lista_notas if nota[0] == acorde_str[0]]
+
+    tonica = possiveis_tonicas[0]
+
+    if len(possiveis_tonicas) > 1:
+        match_nota_acidental = re.match('^[A-G](?:(?!\/\().)', acorde_str)
+        if match_nota_acidental:
+            possivel_tonica = match_nota_acidental.group()
+            regex_tonica = re.compile(possivel_tonica)
+            tonicas_encontradas = [nota for nota in lista_notas if regex_tonica.match(nota)]
+            if len(tonicas_encontradas) > 0:
+                tonica = tonicas_encontradas[0]
+
     acorde.bass()
     acorde.root(tonica)
     # o baixo é sempre a primeira nota da lista.
@@ -165,16 +181,16 @@ def substituir_caracteres_acorde(acorde):
     return re.sub(regex_dim, 'dim', acorde)
 
 
-def obter_unicos_tonicas_baixos_modos(acordes_str, capo=0):
+def obter_unicos_tonicas_baixos_modos(lista_acordes_str, capo=0):
     unicos = []
     tonicas = []
     baixos = []
     modos = []
 
     # Removo os duplicados.
-    acordes_str = set(acordes_str)
+    set_acordes_str = set(lista_acordes_str)
 
-    for acorde_str in acordes_str:
+    for acorde_str in set_acordes_str:
         try:
             logging.info(u"Obtendo dados do acorde <%s>..." % acorde_str)
             acorde_21 = obter_acorde_music21(acorde_str, capo)

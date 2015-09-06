@@ -57,6 +57,7 @@ TODO:
 
 Criar uma variável para quantidade de acordes.
 Criar uma variavel para quantidade de acordes que nao pertencem ao tom.
+Meu dicionario de acordes possivelmente está cagado, eu configurava o baixo e a tonica usando
 
 
 
